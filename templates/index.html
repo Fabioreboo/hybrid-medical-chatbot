@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered medical chatbot for symptom analysis and drug information. Get instant health guidance backed by a verified medical knowledge base.">
+    <title>MediChat — AI Medical Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L12 22M2 12L22 12" stroke-linecap="round"/>
+                            <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <h1>MediChat</h1>
+                        <span class="logo-subtitle">AI Medical Assistant</span>
+                    </div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">FEATURES</div>
+                <div class="nav-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span>Chat</span>
+                </div>
+                <div class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <span>163 Symptoms</span>
+                    <span class="badge">KB</span>
+                </div>
+                <div class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 16v-4M12 8h.01"/>
+                    </svg>
+                    <span>About</span>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span>System Online</span>
+                </div>
+                <div class="version-info">v1.0 — Powered by Groq</div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-main">
+            <!-- Top Bar -->
+            <header class="chat-header">
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+                <div class="header-info">
+                    <h2>Medical Consultation</h2>
+                    <span class="header-status">
+                        <span class="pulse-dot"></span>
+                        Ready to help
+                    </span>
+                </div>
+                <button class="clear-chat-btn" id="clearChat" title="Clear chat">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                </button>
+            </header>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome Message -->
+                <div class="welcome-container" id="welcomeScreen">
+                    <div class="welcome-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 2L12 22M2 12L22 12" stroke-linecap="round"/>
+                            <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                    </div>
+                    <h2 class="welcome-title">How can I help you today?</h2>
+                    <p class="welcome-subtitle">Describe your symptoms and I'll provide information from our verified medical knowledge base.</p>
+                    <div class="quick-prompts">
+                        <button class="prompt-chip" data-prompt="I have a headache">
+                            <span class="chip-icon">🤕</span> Headache
+                        </button>
+                        <button class="prompt-chip" data-prompt="I have a runny nose">
+                            <span class="chip-icon">🤧</span> Runny nose
+                        </button>
+                        <button class="prompt-chip" data-prompt="I feel nauseous">
+                            <span class="chip-icon">🤢</span> Nausea
+                        </button>
+                        <button class="prompt-chip" data-prompt="I have a sore throat">
+                            <span class="chip-icon">😷</span> Sore throat
+                        </button>
+                        <button class="prompt-chip" data-prompt="I have a fever">
+                            <span class="chip-icon">🌡️</span> Fever
+                        </button>
+                        <button class="prompt-chip" data-prompt="I have back pain">
+                            <span class="chip-icon">💪</span> Back pain
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L12 22M2 12L22 12" stroke-linecap="round"/>
+                        <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                </div>
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span class="typing-text">Analyzing symptoms...</span>
+            </div>
+
+            <!-- Disclaimer Banner -->
+            <div class="disclaimer-banner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Medical information only — not a substitute for professional medical advice, diagnosis, or treatment.</span>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="Describe your symptoms..." 
+                        rows="1"
+                        aria-label="Message input"
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn" aria-label="Send message" disabled>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span>Press <kbd>Enter</kbd> to send • <kbd>Shift+Enter</kbd> for new line</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/chat.js"></script>
+</body>
+</html>

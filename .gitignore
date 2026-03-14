@@ -1,0 +1,43 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+
+# Python
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node dependencies and caches
+**/node_modules/
+**/.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+dist/
+build/
+*.tsbuildinfo
+
+# Local databases and temp files
+*.db
+*.tmp
+*.swp
+*.swo
+*.crswap
+.tmp/
+
+# IDE/editor and OS files
+.vscode/
+.idea/
+.claude/
+Thumbs.db
+.DS_Store
