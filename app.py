@@ -417,7 +417,7 @@ def api_admin_kb_requests_approved():
         FROM kb_requests
         WHERE status = 'approved'
         ORDER BY reviewed_at DESC
-        LIMIT 20
+        LIMIT 10
     """)
     rows = cur.fetchall()
     conn.close()
