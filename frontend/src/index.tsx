@@ -8,6 +8,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeModeProvider } from './contexts/ThemeContext';
 import { SnackbarProvider } from 'notistack';
 import { setupAxios } from './api/axiosConfig';
+import './index.css';
 
 setupAxios();
 

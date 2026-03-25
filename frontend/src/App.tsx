@@ -19,36 +19,55 @@ function App() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {user && <Header />}
-      <Box component="main" sx={{ flex: 1, p: 3 }}>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                user ? (
-                  <Navigate to="/chat" replace />
-                ) : (
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              user ? (
+                <Navigate to="/chat" replace />
+              ) : (
+                <Box component="main" sx={{ flex: 1, p: 3 }}>
                   <Login />
-                )
-              }
-            />
-            <Route
-              path="/auth/callback"
-              element={
-                user ? (
-                  <Navigate to="/chat" replace />
-                ) : (
+                </Box>
+              )
+            }
+          />
+          <Route
+            path="/auth/callback"
+            element={
+              user ? (
+                <Navigate to="/chat" replace />
+              ) : (
+                <Box component="main" sx={{ flex: 1, p: 3 }}>
                   <Login />
-                )
-              }
-            />
-            <Route path="/chat" element={user ? <Chat /> : <Navigate to="/" replace />} />
-            <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" replace />} />
-            <Route path="/admin" element={user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/chat" replace />} />
-          </Routes>
-        </Suspense>
-      </Box>
+                </Box>
+              )
+            }
+          />
+          <Route path="/chat" element={user ? <Chat /> : <Navigate to="/" replace />} />
+          <Route path="/dashboard" element={
+            user ? (
+              <>
+                <Header />
+                <Box component="main" sx={{ flex: 1, p: 3 }}>
+                  <Dashboard />
+                </Box>
+              </>
+            ) : <Navigate to="/" replace />
+          } />
+          <Route path="/admin" element={
+            user?.role === 'admin' ? (
+              <>
+                <Header />
+                <Box component="main" sx={{ flex: 1, p: 3 }}>
+                  <AdminPanel />
+                </Box>
+              </>
+            ) : <Navigate to="/chat" replace />
+          } />
+        </Routes>
+      </Suspense>
     </Box>
   );
 }

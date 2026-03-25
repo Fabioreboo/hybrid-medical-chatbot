@@ -323,58 +323,33 @@ def get_response(user_input: str) -> dict:
 
 ---
 
-## Phase 3 — Flask App & Modern UI
+## Phase 3 — React Frontend & Premium UI
 
-### `app.py`
+### Frontend Architecture Shift
+The frontend was upgraded from simple Flask HTML templates to a full React application (`frontend/src/`) using Vite and Material UI, allowing for a dynamic, single-page application experience.
 
-```python
-from flask import Flask, render_template, request, jsonify
-from app.chatbot_backend import get_response
+### Design Spec (`frontend/src/pages/Chat.tsx` & `index.css`)
+**Design Language:** Premium, Claude.ai-inspired aesthetic. Focus on high-fidelity typography, smooth transitions, and distinct message layout.
 
-app = Flask(__name__)
-
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    data = request.get_json()
-    user_input = data.get("message", "").strip()
-    
-    if not user_input:
-        return jsonify({"error": "Empty message"}), 400
-
-    result = get_response(user_input)
-    return jsonify(result)
-
-if __name__ == "__main__":
-    app.run(debug=True)
-```
-
-### UI Design Spec (`templates/index.html`)
-
-**Design language:** Clean medical-grade interface — dark navy sidebar, white chat area, teal accent color.
-
-**Components:**
-- Fixed header with app name + medical cross icon
-- Scrollable chat message area
-- Animated typing indicator while waiting for Groq response
-- Source badge on each response: `🗄️ Database` or `🤖 AI Fallback`
-- Sticky medical disclaimer banner at the bottom
-- Responsive — works on mobile and desktop
-- Send on Enter key + Send button
-
-**Color palette:**
-```css
---primary: #0d9488      /* teal — action color */
---bg-dark: #0f172a      /* dark navy — sidebar */
---bg-light: #f8fafc     /* off-white — chat area */
---user-bubble: #0d9488  /* teal — user messages */
---bot-bubble: #ffffff    /* white — bot messages */
---text-main: #1e293b    /* near black */
---disclaimer: #fef3c7   /* amber warning */
-```
+**Implemented Features & Components:**
+- **Conversational UI Layout:**
+  - Distinct User vs. AI message bubbling. User messages are right-aligned with a specialized border-radius (bottom-right flat); AI messages are left-aligned (bottom-left flat) accompanied by an AI avatar.
+  - Fully responsive layout that smoothly resizes and shifts chat content when the sidebar toggles, keeping user messages anchored to the right.
+- **Sidebar & Thread Management:**
+  - Persistent chat history allowing navigation across multiple threads.
+  - "New Chat" functionality.
+  - Mobile-responsive sliding drawer sidebar with a dark backdrop overlay.
+- **Dark Mode & Light Mode:** 
+  - Seamless theme toggling via header icon, mapped to a comprehensive suite of CSS variables.
+  - State persists via `localStorage` and falls back to system preferences.
+- **Premium Indicators & Actions:**
+  - **Aesthetic Status SVGs:** Minimalist, sleek line-art SVG icons for "KB Verified" (shield), "AI Generated" (sparkle), and "Save to KB" (bookmark) replacing bulky textual badges. Enhanced with Tooltip hover states.
+  - **Copy-to-Clipboard:** AI responses feature a subtle copy button that provides temporary visual feedback ("Copied!" tooltip + green checkmark).
+  - **Chat Exporting:** A header menu allowing users to export the current chat thread to either `.TXT` or `.PDF` (via jsPDF) formats.
+- **UX Polish:**
+  - **Welcome Screen:** A clean "Good afternoon" landing view introducing the MediChat persona on empty threads.
+  - **Interactive Disclaimer Dialog:** A stylish, center-screen modal disclaimer popup with an "I Understand and Agree" button, replacing the old persistent sticky footer.
+  - **Typing Indicator:** Animated 3-dot UI showing "MediChat is typing..." while waiting for the LLM.
 
 ---
 
@@ -428,13 +403,13 @@ Expected: Detects and responds to first matched symptom
 
 | Step | File | Status |
 |------|------|--------|
-| 1 | `backend/symptom_detector.py` | 🔲 Build next |
-| 2 | `backend/query_engine.py` | 🔲 |
-| 3 | `backend/groq_client.py` | 🔲 |
-| 4 | `app/chatbot_backend.py` | 🔲 |
-| 5 | `app.py` | 🔲 |
-| 6 | `templates/index.html` + CSS + JS | 🔲 |
-| 7 | End-to-end testing (5 test cases) | 🔲 |
+| 1 | `backend/symptom_detector.py` | ✅ Complete |
+| 2 | `backend/query_engine.py` | ✅ Complete |
+| 3 | `backend/groq_client.py` | ✅ Complete |
+| 4 | `app/chatbot_backend.py` | ✅ Complete |
+| 5 | `app.py` | ✅ Complete |
+| 6 | React Frontend (`Chat.tsx` + `index.css`) | ✅ Complete (All Premium UX features added) |
+| 7 | End-to-end testing (5 test cases) | ✅ Complete |
 
 ---
 
