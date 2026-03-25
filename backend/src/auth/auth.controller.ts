@@ -24,7 +24,7 @@ export class AuthController {
     // Redirect to frontend with JWT token
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     return {
-      url: `${frontendUrl}/auth/callback?token=${loginResult.access_token}&user=${JSON.stringify(loginResult.user)}`,
+      url: `${frontendUrl}/auth/callback?token=${loginResult.access_token}&user=${encodeURIComponent(JSON.stringify(loginResult.user))}`,
     };
   }
 

@@ -33,13 +33,17 @@ SCHEMA = {
 }
 
 
-def explain_with_kb(result: dict) -> str:
+def explain_with_kb(result: dict, chat_history: str = "") -> str:
     """
     KB hit mode: Groq explains the structured DB result naturally.
     The LLM must NOT invent additional drug facts.
     """
+    history_prompt = ""
+    if chat_history:
+        history_prompt = f"Recent Conversation History (for context only):\n{chat_history}\n\n"
+
     prompt = f"""You are a helpful, cautious medical assistant.
-Based ONLY on the structured data below, explain the treatment clearly to a patient in 2-3 sentences.
+{history_prompt}Based ONLY on the structured data below, explain the treatment clearly to a patient in 2-3 sentences.
 Do NOT add any drug facts that are not present in the data below.
 
 Symptom: {result["symptom"]}
@@ -47,6 +51,8 @@ Recommended drug: {result["drug"]}
 Mechanism: {result["mechanism"]}
 Precautions: {result["precautions"]}
 Known side effects: {result["side_effect"] or "not listed — use general caution"}
+
+CRITICAL INSTRUCTION: You MUST ask the user if they have any specific allergies related to the suggested medicine. To do this, use your medical knowledge to identify the common allergic reactions, symptoms, or conditions caused by allergies to {result["drug"]} (like hives, facial swelling, asthma). Then, explicitly ask if they have ever experienced those specific reactions when taking similar medications, instead of using the drug or class name. For example, instead of asking if they are allergic to NSAIDs, ask: "Have you ever experienced hives, facial swelling, or asthma symptoms when taking pain relievers?" Add this question to the end of your response.
 
 Respond in plain English. Be concise and helpful."""
 
@@ -57,28 +63,39 @@ Respond in plain English. Be concise and helpful."""
         content = response.choices[0].message.content
         if content:
             return content
-        return f"I found information about {result['drug']} for {result['symptom']}, but couldn't generate an explanation right now. Please consult a pharmacist."
+        return f"I found information about {result['drug']} for {result['symptom']}, but couldn't generate an explanation right now. Are you allergic to {result['drug']}?"
 
     except Exception as e:
-        return f"I found information about {result['drug']} for {result['symptom']}, but couldn't generate an explanation right now. Please consult a pharmacist."
+        return f"I found information about {result['drug']} for {result['symptom']}, but couldn't generate an explanation right now. Are you allergic to {result['drug']}?"
 
 
-def fallback(user_input: str) -> dict:
+def fallback(user_input: str, chat_history: str = "") -> dict:
     """
-    Fallback mode: symptom not in DB, Groq answers from its own knowledge.
+    Fallback mode: symptom not in DB, Groq answers from its own knowledge, 
+    or handles conversation like allergy questions.
     Returns both explanation and structured data for potential KB save.
     """
-    prompt = f"""You are a cautious medical assistant. A patient said:
+    history_prompt = ""
+    if chat_history:
+        history_prompt = f"Recent Conversation History:\n{chat_history}\n\n"
+
+    prompt = f"""You are a cautious medical assistant. 
+{history_prompt}A patient just said:
 "{user_input}"
 
-Provide a brief, helpful response. If you mention any medication, note it's a general suggestion only.
-Do NOT include any long medical disclaimers, warnings to consult a doctor, or notes about this being general advice. The user has already agreed to a medical disclaimer in the app UI.
+Provide a brief, helpful response. 
+
+1. If the user is answering a previous question about allergies (e.g. saying "yes", "no", "I get hives"):
+    - If they indicate they have experienced allergic reactions, apologize and recommend an alternative over-the-counter medicine avoiding the allergen.
+    - If they say they are NOT allergic (e.g. "no"), reassure them they can proceed safely and DO NOT ask any further allergy questions.
+2. ONLY IF you are introducing a NEW medicine for the FIRST time (including new alternatives), you MUST ask the user if they have any allergies related to it at the end of your response. Use your medical knowledge to identify common allergic reactions (like hives or asthma) associated with the medicine, and explicitly ask if they've ever had those reactions instead of using strict medical names.
+3. Do NOT include any long medical disclaimers, warnings to consult a doctor, or notes about this being general advice. The user has already agreed to a medical disclaimer in the app UI.
 
 You MUST respond in JSON format with EXACTLY these keys:
 {{
-    "explanation": "Your 2-3 sentence response to the patient here",
-    "symptom": "the main symptom detected",
-    "drug": "any medication mentioned, or empty string",
+    "explanation": "Your 2-3 sentence response to the patient here (make sure to ask about allergies if suggesting a drug)",
+    "symptom": "the main symptom discussed (e.g., headache), or empty string",
+    "drug": "any medication mentioned/suggested, or empty string",
     "mechanism": "how the drug works, or empty string",
     "precautions": "any warnings or precautions",
     "side_effect": "any side effects mentioned, or empty string"

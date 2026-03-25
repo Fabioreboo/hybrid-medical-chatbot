@@ -9,6 +9,19 @@ import { ThemeModeProvider } from './contexts/ThemeContext';
 import { SnackbarProvider } from 'notistack';
 import { setupAxios } from './api/axiosConfig';
 import './index.css';
+import * as Sentry from "@sentry/react";
+
+if (window.React) {
+  window.React.startTransition = window.React.startTransition || ((callback) => callback());
+}
+
+Sentry.init({
+  dsn: "https://13d878ebda8df565f7cd5452c8cd411b@o4511082152919040.ingest.us.sentry.io/4511082175660032",
+  integrations: [
+    Sentry.browserTracingIntegration(),
+  ],
+  tracesSampleRate: 1.0,
+});
 
 setupAxios();
 

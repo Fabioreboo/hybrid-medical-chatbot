@@ -15,7 +15,6 @@ import {
   AccountCircle,
   Logout,
   Chat as ChatIcon,
-  Dashboard as DashboardIcon,
   AdminPanelSettings as AdminIcon,
   Brightness4,
   Brightness7,
@@ -63,15 +62,6 @@ export const Header: React.FC = () => {
             sx={navActive('/chat')}
           >
             Chat
-          </Button>
-
-          <Button
-            color="inherit"
-            startIcon={<DashboardIcon />}
-            onClick={() => navigate('/dashboard')}
-            sx={navActive('/dashboard')}
-          >
-            Dashboard
           </Button>
 
           {user?.role === 'admin' && (

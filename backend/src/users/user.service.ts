@@ -1,6 +1,7 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import { User, UserRole } from './user.entity';
 
 @Injectable()
@@ -8,10 +9,19 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private configService: ConfigService,
   ) {}
 
   async findByGoogleId(googleId: string): Promise<User> {
-    return this.usersRepository.findOne({ where: { google_id: googleId } });
+    const user = await this.usersRepository.findOne({ where: { google_id: googleId } });
+    if (user && user.role !== UserRole.ADMIN) {
+      const adminEmail = this.configService.get<string>('FIRST_ADMIN_EMAIL') || this.configService.get<string>('ADMIN_EMAIL');
+      if (adminEmail && user.email.toLowerCase() === adminEmail.toLowerCase()) {
+        user.role = UserRole.ADMIN;
+        return this.usersRepository.save(user);
+      }
+    }
+    return user;
   }
 
   async findByEmail(email: string): Promise<User> {
@@ -36,11 +46,17 @@ export class UsersService {
       throw new ConflictException('Email already registered');
     }
 
+    const adminEmail = this.configService.get<string>('FIRST_ADMIN_EMAIL') || this.configService.get<string>('ADMIN_EMAIL');
+    const role = (adminEmail && userData.email.toLowerCase() === adminEmail.toLowerCase())
+      ? UserRole.ADMIN
+      : UserRole.USER;
+
     const user = this.usersRepository.create({
       google_id: userData.googleId,
       email: userData.email,
       name: userData.name,
       avatar_url: userData.avatarUrl,
+      role,
     });
 
     return this.usersRepository.save(user);

@@ -1,5 +1,5 @@
 # 🏥 Medical Chatbot — Enhanced Implementation Plan
-> **Status:** Database complete (163 rows, 0 nulls, all indexes verified) → Ready to build backend
+> **Status:** Admin Panel and Auth complete. → Ready for deployment
 
 ---
 
@@ -8,13 +8,15 @@
 ```
 User Message (Browser)
         ↓
-   Flask app.py  ←── serves HTML/CSS/JS
+   Flask app.py  ←── serves HTML/CSS/JS (Auth, Chat, Admin)
         ↓
  chatbot_backend.py  (orchestrator)
         ↓
 symptom_detector.py  →  query_engine.py  →  groq_client.py
                                ↓
-                       medical_kb.db (163 symptoms)
+                       medical_kb.db (Knowledge Base)
+                               ↓
+                          chat.db (User data, threads, logs, KB requests)
 ```
 
 ---
@@ -25,7 +27,7 @@ symptom_detector.py  →  query_engine.py  →  groq_client.py
 medical_chatbot/
 │
 ├── medical kb/
-│   ├── medical_kb.db          ← main KB (163 rows, ready)
+│   ├── medical_kb.db          ← main KB
 │   ├── chembl_small.db        ← pharmacology reference
 │   └── pubchem_synonyms.db    ← drug name normalization
 │
@@ -33,22 +35,25 @@ medical_chatbot/
 │   ├── __init__.py
 │   ├── symptom_detector.py
 │   ├── query_engine.py
-│   └── groq_client.py
-│
-├── app/
-│   └── chatbot_backend.py
+│   ├── groq_client.py
+│   └── chat_db.py             ← now includes users, kb_requests, query_logs
 │
 ├── templates/
-│   └── index.html             ← modern chat UI
+│   ├── index.html             ← main chat UI + modals
+│   ├── login.html             ← login/register page
+│   └── admin_panel.html       ← admin dashboard
 │
 ├── static/
 │   ├── css/
-│   │   └── style.css
+│   │   ├── style.css
+│   │   ├── claude_element.css
+│   │   └── admin.css          ← new admin styles
 │   └── js/
-│       └── chat.js
+│       ├── chat.js
+│       └── admin.js           ← new admin logic
 │
-├── app.py                     ← Flask entry point
-├── .env                       ← GROQ_API_KEY (never commit)
+├── app.py                     ← Flask entry point (now with auth, admin routes)
+├── .env                       ← GROQ_API_KEY, ADMIN_PIN, ADMIN_EMAIL, SECRET_KEY
 ├── .gitignore
 ├── requirements.txt
 └── README.md
@@ -62,6 +67,7 @@ medical_chatbot/
 ```
 groq
 flask
+flask-cors           ← Added for frontend-backend communication
 python-dotenv
 rapidfuzz
 ```
@@ -71,6 +77,9 @@ rapidfuzz
 ### .env
 ```
 GROQ_API_KEY=your_key_here
+ADMIN_PIN=your_pin_here         ← New
+ADMIN_EMAIL=admin@example.com   ← New
+SECRET_KEY=a_strong_secret_key  ← New, for Flask sessions
 ```
 
 ### .gitignore
@@ -84,7 +93,7 @@ __pycache__/
 
 ### Install command
 ```bash
-pip install groq flask python-dotenv rapidfuzz
+pip install groq flask flask-cors python-dotenv rapidfuzz
 ```
 
 ---
@@ -126,12 +135,12 @@ def detect_symptoms(user_input: str) -> list[str]:
     """
     known = get_known_symptoms()
     user_input_lower = user_input.lower().strip()
-    
+
     # Try direct substring match first (fast path)
     direct = [s for s in known if s in user_input_lower]
     if direct:
         return direct
-    
+
     # Fuzzy match fallback (handles typos)
     matches = process.extract(
         user_input_lower,
@@ -279,123 +288,141 @@ Always recommend seeing a doctor for diagnosis. Respond in 2-3 sentences."""
 
 ---
 
-### Module 4: `app/chatbot_backend.py`
+### Module 4: `backend/chat_db.py`
 
-**Purpose:** Orchestrator that wires all 3 modules together.
+**Purpose:** Database interactions for chat threads, messages, user management, KB requests, and query logs.
 
-```python
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+**New Tables:**
+- `users`: stores user accounts, now with `is_banned` column.
+- `kb_requests`: stores user suggestions for the knowledge base.
+- `query_logs`: records every chatbot interaction.
 
-from backend.symptom_detector import detect_symptoms
-from backend.query_engine import query_symptom
-from backend.groq_client import explain_with_kb, fallback
-
-def get_response(user_input: str) -> dict:
-    """
-    Main pipeline: user_input → symptoms → DB query → Groq response.
-    Returns a dict with response text and metadata for the frontend.
-    """
-    if not user_input or not user_input.strip():
-        return {"response": "Please describe your symptoms.", "source": "validation"}
-
-    symptoms = detect_symptoms(user_input)
-
-    if symptoms:
-        result = query_symptom(symptoms[0])
-        if result:
-            response_text = explain_with_kb(result)
-            return {
-                "response": response_text,
-                "source": "database",
-                "symptom": result["symptom"],
-                "drug": result["drug"]
-            }
-
-    # Fallback: symptom not in DB
-    response_text = fallback(user_input)
-    return {
-        "response": response_text,
-        "source": "llm_fallback"
-    }
-```
+**Key Functions Added:**
+- `init_chat_db`: creates all necessary tables (`threads`, `messages`, `users`, `kb_requests`, `query_logs`) and safely adds `is_banned` column to `users`.
+- `log_query`: Inserts a new entry into `query_logs` for each user query.
+- `get_user_by_email`, `get_user_by_id`: Helper functions to retrieve user information.
 
 ---
 
-## Phase 3 — React Frontend & Premium UI
+### Module 5: `app.py`
 
-### Frontend Architecture Shift
-The frontend was upgraded from simple Flask HTML templates to a full React application (`frontend/src/`) using Vite and Material UI, allowing for a dynamic, single-page application experience.
+**Purpose:** Flask entry point, routing, session management, and API endpoints.
 
-### Design Spec (`frontend/src/pages/Chat.tsx` & `index.css`)
-**Design Language:** Premium, Claude.ai-inspired aesthetic. Focus on high-fidelity typography, smooth transitions, and distinct message layout.
-
-**Implemented Features & Components:**
-- **Conversational UI Layout:**
-  - Distinct User vs. AI message bubbling. User messages are right-aligned with a specialized border-radius (bottom-right flat); AI messages are left-aligned (bottom-left flat) accompanied by an AI avatar.
-  - Fully responsive layout that smoothly resizes and shifts chat content when the sidebar toggles, keeping user messages anchored to the right.
-- **Sidebar & Thread Management:**
-  - Persistent chat history allowing navigation across multiple threads.
-  - "New Chat" functionality.
-  - Mobile-responsive sliding drawer sidebar with a dark backdrop overlay.
-- **Dark Mode & Light Mode:** 
-  - Seamless theme toggling via header icon, mapped to a comprehensive suite of CSS variables.
-  - State persists via `localStorage` and falls back to system preferences.
-- **Premium Indicators & Actions:**
-  - **Aesthetic Status SVGs:** Minimalist, sleek line-art SVG icons for "KB Verified" (shield), "AI Generated" (sparkle), and "Save to KB" (bookmark) replacing bulky textual badges. Enhanced with Tooltip hover states.
-  - **Copy-to-Clipboard:** AI responses feature a subtle copy button that provides temporary visual feedback ("Copied!" tooltip + green checkmark).
-  - **Chat Exporting:** A header menu allowing users to export the current chat thread to either `.TXT` or `.PDF` (via jsPDF) formats.
-- **UX Polish:**
-  - **Welcome Screen:** A clean "Good afternoon" landing view introducing the MediChat persona on empty threads.
-  - **Interactive Disclaimer Dialog:** A stylish, center-screen modal disclaimer popup with an "I Understand and Agree" button, replacing the old persistent sticky footer.
-  - **Typing Indicator:** Animated 3-dot UI showing "MediChat is typing..." while waiting for the LLM.
-
----
-
-## Phase 4 — Testing
-
-### Test 1 — KB Hit
-```
-Input:  "I have a runny nose"
-Expected: Loratadine mentioned, source = "database"
-```
-
-### Test 2 — KB Miss (Fallback)
-```
-Input:  "I think I have a broken leg"
-Expected: Groq response, source = "llm_fallback"
-```
-
-### Test 3 — SQL Injection Safety
-```
-Input:  "'; DROP TABLE medical_knowledge; --"
-Expected: No DB error, graceful fallback response
-```
-
-### Test 4 — Typo Handling
-```
-Input:  "I have a headche"
-Expected: Detects "headache" via fuzzy match, returns ibuprofen
-```
-
-### Test 5 — Multi-symptom
-```
-Input:  "I have a headache and runny nose"
-Expected: Detects and responds to first matched symptom
-```
+**Key Features Added:**
+- **Authentication:**
+    - `@login_required` and `@admin_required` decorators for route protection.
+    - `/login` (GET/POST): Handles user login, checks `is_banned` status.
+    - `/register` (POST): Handles new user registration.
+    - `/logout`: Clears session.
+    - `SECRET_KEY` loaded from `.env` for session security.
+    - `@app.before_request`: Global check for banned users on every request.
+- **KB Suggestion (User-side):**
+    - `/api/kb_request` (POST): Allows logged-in users to suggest new KB entries for admin review.
+- **Admin Access:**
+    - `/admin/verify_pin` (POST): Verifies `ADMIN_PIN` from `.env` to grant `session['is_admin']`.
+    - `/admin` (GET): Renders `admin_panel.html`, provides summary statistics.
+- **Admin KB Requests Management:**
+    - `/admin/kb_requests` (GET): Fetches pending KB requests.
+    - `/admin/kb_requests/<id>/approve` (POST): Approves a request, adds to `medical_knowledge.db`, and updates request status.
+    - `/admin/kb_requests/<id>/reject` (POST): Rejects a request.
+- **Admin User Management:**
+    - `/admin/users` (GET): Lists all users with their query counts and banned status.
+    - `/admin/users/<id>/ban` (POST): Bans a user, invalidates their session.
+    - `/admin/users/<id>/unban` (POST): Unbans a user.
+    - `/admin/users/<id>/delete` (POST): Deletes a user and their associated data (KB requests, query logs). Prevents admin from banning/deleting themselves.
+- **Admin Analytics & Query Logs:**
+    - `/admin/analytics` (GET): Provides data for charts (top symptoms, KB hit rate, daily queries).
+    - `/admin/query_logs` (GET): Paginated and searchable list of all user queries.
 
 ---
 
-## Phase 5 — Security Checklist
+### Module 6: `chatbot_backend.py`
+
+**Purpose:** Main orchestrator, now enhanced to log user queries.
+
+**Enhancements over original plan:**
+- `get_response` now accepts `user_id`, `username`, `user_email` to log queries.
+- Calls `chat_db.log_query()` for every user interaction, distinguishing between KB hits and LLM fallbacks.
+
+---
+
+## Phase 7 — Frontend Development
+
+### `templates/index.html` (Main Chat UI)
+
+**Enhancements:**
+- **User Authentication integration:** Dynamically shows username.
+- **Admin Access:**
+    - A `🔐` lock icon is displayed next to the user's name in the sidebar footer if `session['user_email']` matches `ADMIN_EMAIL`.
+    - Clicking it opens an `admin_pin_modal` (defined in inline `<style>` and `<script>` tags).
+- **Suggest to KB Button:**
+    - A "Suggest to KB" button appears on every bot response.
+    - Clicking it opens a `kb_request_modal` (defined in inline `<style>` and `<script>` tags) pre-filled with available symptom/drug data.
+
+### `static/js/chat.js`
+
+**Enhancements:**
+- Integrated with new Flask `/threads` and `/chat` endpoints (no change for this summary, but implemented in code).
+- Now includes logic to trigger the `openKbModal` (from `index.html`) when the "Suggest to KB" button is clicked.
+- Added basic styling for the new `.suggest-kb-btn`.
+
+### `templates/login.html` (New File)
+
+**Purpose:** Provides a user interface for signing in and registering new accounts.
+
+**Features:**
+- Tabbed interface for "Sign In" and "Register".
+- Collects email, password (and username for registration).
+- Uses AJAX to interact with `/login` and `/register` endpoints.
+- Displays error messages.
+
+### `templates/admin_panel.html` (New File)
+
+**Purpose:** Comprehensive dashboard for administrators.
+
+**Sections:**
+1.  **KB Requests:** Lists pending user suggestions for KB, with Approve/Reject actions.
+2.  **User Management:** Table of all users, with options to Ban/Unban or Delete. Includes total queries per user.
+3.  **Query Logs:** Paginated table of all chatbot interactions, searchable by username or symptom.
+4.  **Analytics:** Summary cards (Total Users, Pending Requests, KB Entries, Queries Today, KB Hits, LLM Fallbacks) and charts (Chart.js) for top symptoms, KB hit rate, and daily queries.
+
+### `static/css/admin.css` (New File)
+
+**Purpose:** Dedicated styling for the admin panel, following the Claude.ai aesthetic.
+
+**Features:**
+- Custom color variables prefixed with `--admin-`.
+- Responsive layout for admin tables and charts.
+- Styles for summary cards, action buttons, badges, and the toast notification system.
+
+### `static/js/admin.js` (New File)
+
+**Purpose:** Client-side logic for the admin panel.
+
+**Features:**
+- **Navigation:** Manages active sections and loads data accordingly.
+- **KB Requests:** Fetches and renders pending requests, handles Approve/Reject actions with live updates and toasts.
+- **User Management:** Fetches and renders user list, handles Ban/Unban/Delete actions.
+- **Query Logs:** Fetches, renders, and paginates query logs. Includes client-side search/filter.
+- **Analytics:** Fetches data and renders charts using Chart.js.
+- **Utilities:** Helper functions for HTML escaping, date/time formatting, and toast notifications.
+
+---
+
+## Phase 8 — Security Checklist
 
 - [x] All SQL queries use parameterized inputs (`?` placeholders)
-- [x] `GROQ_API_KEY` loaded from `.env` only, never hardcoded
+- [x] `GROQ_API_KEY`, `ADMIN_PIN`, `ADMIN_EMAIL`, `SECRET_KEY` loaded from `.env` only, never hardcoded.
 - [x] `.env` in `.gitignore`
 - [x] `*.db` in `.gitignore`
 - [x] Medical disclaimer shown on every response
 - [x] Input sanitized (empty message check before processing)
 - [x] Groq errors caught — app never crashes on API failure
+- [x] Session-based authentication implemented.
+- [x] Admin access protected by `ADMIN_PIN` and `ADMIN_EMAIL`.
+- [x] `session['is_admin']` checked on every `/admin` route.
+- [x] Banned users prevented from logging in and accessing any routes.
+- [x] Admin cannot ban or delete their own account.
 
 ---
 
@@ -406,22 +433,13 @@ Expected: Detects and responds to first matched symptom
 | 1 | `backend/symptom_detector.py` | ✅ Complete |
 | 2 | `backend/query_engine.py` | ✅ Complete |
 | 3 | `backend/groq_client.py` | ✅ Complete |
-| 4 | `app/chatbot_backend.py` | ✅ Complete |
-| 5 | `app.py` | ✅ Complete |
-| 6 | React Frontend (`Chat.tsx` + `index.css`) | ✅ Complete (All Premium UX features added) |
-| 7 | End-to-end testing (5 test cases) | ✅ Complete |
-
----
-
-## Key Improvements Over Original Plan
-
-| Area | Original Plan | Enhanced Plan |
-|------|--------------|---------------|
-| Symptom matching | Simple substring | Fuzzy match (rapidfuzz) — handles typos |
-| SQL safety | Not specified | Explicit parameterized queries |
-| Error handling | Not specified | Every module has try/except, never crashes |
-| Groq errors | Not specified | Returns safe fallback message |
-| NULL mechanism | Not handled | Defaults to "mechanism not available" |
-| UI source badge | Not specified | Shows DB vs LLM source on each reply |
-| Multi-symptom | Not specified | Detects and handles multiple symptoms |
-| Confidence scoring | Not specified | Fuzzy match threshold of 70% |
+| 4 | `backend/chat_db.py` | ✅ Complete (Added users, kb_requests, query_logs tables & functions) |
+| 5 | `app.py` | ✅ Complete (Full rewrite with auth, admin, KB requests) |
+| 6 | `templates/login.html` | ✅ Complete (New login/register page) |
+| 7 | `templates/admin_panel.html` | ✅ Complete (New admin dashboard) |
+| 8 | `static/css/admin.css` | ✅ Complete (New admin styles) |
+| 9 | `static/js/admin.js` | ✅ Complete (New admin logic) |
+| 10 | `templates/index.html` | ✅ Complete (Added admin lock, KB suggest modal & triggers) |
+| 11 | `static/js/chat.js` | ✅ Complete (Added suggest to KB button logic) |
+| 12 | `static/css/style.css` | ✅ Complete (Added suggest to KB button styles) |
+| 13 | End-to-end testing (5 test cases) | ⏳ Pending |

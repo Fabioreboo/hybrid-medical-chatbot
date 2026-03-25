@@ -1,4 +1,7 @@
 groq
 flask
+flask-cors
 python-dotenv
 rapidfuzz
+sentry-sdk[flask]
+requests

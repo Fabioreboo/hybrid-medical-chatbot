@@ -3,10 +3,27 @@ import { AuthGuard } from '@nestjs/passport';
 import { AdminService } from './admin.service';
 import { User } from '../users/user.entity';
 import { ApproveKbDto, RejectKbDto } from './dto/admin-actions.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  @Post('auth')
+  @UseGuards(AuthGuard('jwt'))
+  async verifyAdminPassword(@Body('password') password: string, @Request() req) {
+    const user = req.user as User;
+    await this.adminService.ensureAdmin(user);
+    
+    const correctPassword = this.configService.get<string>('ADMIN_PASSWORD');
+    if (password === correctPassword) {
+      return { success: true };
+    }
+    return { success: false, message: 'Invalid admin password' };
+  }
 
   @Get('users')
   @UseGuards(AuthGuard('jwt'))

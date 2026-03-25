@@ -7,7 +7,6 @@ import { useAuth } from './contexts/AuthContext';
 import { LoadingSpinner } from './components/LoadingSpinner';
 
 const Chat = lazy(() => import('./pages/Chat'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 
 function App() {
@@ -18,7 +17,7 @@ function App() {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
           <Route
@@ -27,7 +26,7 @@ function App() {
               user ? (
                 <Navigate to="/chat" replace />
               ) : (
-                <Box component="main" sx={{ flex: 1, p: 3 }}>
+                <Box component="main" sx={{ flex: 1, p: 3, overflowY: 'auto' }}>
                   <Login />
                 </Box>
               )
@@ -39,28 +38,18 @@ function App() {
               user ? (
                 <Navigate to="/chat" replace />
               ) : (
-                <Box component="main" sx={{ flex: 1, p: 3 }}>
+                <Box component="main" sx={{ flex: 1, p: 3, overflowY: 'auto' }}>
                   <Login />
                 </Box>
               )
             }
           />
           <Route path="/chat" element={user ? <Chat /> : <Navigate to="/" replace />} />
-          <Route path="/dashboard" element={
-            user ? (
-              <>
-                <Header />
-                <Box component="main" sx={{ flex: 1, p: 3 }}>
-                  <Dashboard />
-                </Box>
-              </>
-            ) : <Navigate to="/" replace />
-          } />
           <Route path="/admin" element={
             user?.role === 'admin' ? (
               <>
                 <Header />
-                <Box component="main" sx={{ flex: 1, p: 3 }}>
+                <Box component="main" sx={{ flex: 1, p: 3, overflowY: 'auto' }}>
                   <AdminPanel />
                 </Box>
               </>

@@ -9,6 +9,34 @@ import { User } from '../users/user.entity';
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
+  @Get('threads')
+  @UseGuards(AuthGuard('jwt'))
+  async getThreads(@Request() req) {
+    const user = req.user as User;
+    return this.chatService.getThreads(user.id);
+  }
+
+  @Get('threads/:id')
+  @UseGuards(AuthGuard('jwt'))
+  async getThreadMessages(@Param('id') id: string, @Request() req) {
+    const user = req.user as User;
+    return this.chatService.getThreadMessages(id, user.id);
+  }
+
+  @Post('threads')
+  @UseGuards(AuthGuard('jwt'))
+  async createThread(@Body() body: { title: string }, @Request() req) {
+    const user = req.user as User;
+    return this.chatService.createThread(body.title, user.id);
+  }
+
+  @Delete('threads/:id')
+  @UseGuards(AuthGuard('jwt'))
+  async deleteThread(@Param('id') id: string, @Request() req) {
+    const user = req.user as User;
+    return this.chatService.deleteThread(id, user.id);
+  }
+
   @Post()
   @UseGuards(AuthGuard('jwt'))
   async sendMessage(@Body() createChatDto: CreateChatDto, @Request() req): Promise<ChatMessage> {

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatMessage, ChatMessageSource } from './chat.entity';
+import { ChatThread } from './chat-thread.entity';
 import { User } from '../users/user.entity';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { AuditService } from '../audit/audit.service';
@@ -11,6 +12,8 @@ export class ChatService {
   constructor(
     @InjectRepository(ChatMessage)
     private chatRepository: Repository<ChatMessage>,
+    @InjectRepository(ChatThread)
+    private threadRepository: Repository<ChatThread>,
     private auditService: AuditService,
   ) {}
 
@@ -115,5 +118,50 @@ export class ChatService {
     });
 
     return { deleted: messages.length };
+  }
+
+  async getThreads(userId: string): Promise<ChatThread[]> {
+    return this.threadRepository.find({
+      where: { user_id: userId },
+      order: { updated_at: 'DESC' },
+    });
+  }
+
+  async getThreadMessages(threadId: string, userId: string): Promise<ChatMessage[]> {
+    const thread = await this.threadRepository.findOne({
+      where: { id: threadId, user_id: userId },
+    });
+
+    if (!thread) {
+      throw new NotFoundException('Thread not found');
+    }
+
+    return this.chatRepository.find({
+      where: { session_id: threadId },
+      order: { created_at: 'ASC' },
+    });
+  }
+
+  async createThread(title: string, userId: string): Promise<ChatThread> {
+    const thread = this.threadRepository.create({
+      title,
+      user_id: userId,
+    });
+    return this.threadRepository.save(thread);
+  }
+
+  async deleteThread(threadId: string, userId: string): Promise<{ deleted: boolean }> {
+    const thread = await this.threadRepository.findOne({
+      where: { id: threadId, user_id: userId },
+    });
+
+    if (!thread) {
+      throw new NotFoundException('Thread not found');
+    }
+
+    await this.chatRepository.delete({ session_id: threadId });
+    await this.threadRepository.remove(thread);
+
+    return { deleted: true };
   }
 }

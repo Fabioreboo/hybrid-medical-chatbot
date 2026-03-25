@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import axios from 'axios';
+import { authAxios } from '../api/axiosConfig';
 
 interface User {
   id: string;
@@ -42,16 +42,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-      // Fetch user profile
-      axios.get('/auth/me')
+      // Set default auth header
+      authAxios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      // Use authAxios which points to NestJS
+      authAxios.get('/auth/me')
         .then(response => {
           setUser(response.data);
+          // Store in sessionStorage
+          sessionStorage.setItem('userEmail', response.data.email);
+          sessionStorage.setItem('userName', response.data.name);
+          sessionStorage.setItem('userRole', response.data.role);
         })
-        .catch(() => {
-          localStorage.removeItem('token');
-          delete axios.defaults.headers.common['Authorization'];
+        .catch((error) => {
+          // Token might be invalid or server unavailable - keep it for now
+          // API calls will fail if token is truly invalid
+          console.log('Auth check failed, will retry on next API call');
         })
         .finally(() => {
           setLoading(false);
@@ -63,13 +69,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = (token: string, userData: User) => {
     localStorage.setItem('token', token);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    sessionStorage.setItem('userEmail', userData.email);
+    sessionStorage.setItem('userName', userData.name);
+    sessionStorage.setItem('userRole', userData.role);
+    authAxios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(userData);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
+    sessionStorage.removeItem('userEmail');
+    sessionStorage.removeItem('userName');
+    sessionStorage.removeItem('userRole');
+    delete authAxios.defaults.headers.common['Authorization'];
     setUser(null);
   };
 
