@@ -18,7 +18,15 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import MedicationIcon from '@mui/icons-material/Medication';
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
+import ScienceIcon from '@mui/icons-material/Science';
+import BiotechIcon from '@mui/icons-material/Biotech';
+import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import jsPDF from 'jspdf';
+import RadarEffect, { IconItem } from '../components/ui/RadarEffect';
 
 interface Message {
   role: 'user' | 'bot';
@@ -725,14 +733,25 @@ const Chat: React.FC = () => {
 
           <div className="chat-area" id="chatMessages">
             {messages.length === 0 ? (
-              <div className="welcome-screen" id="welcomeScreen">
-                <div className="welcome-logo-wrapper">
-                  <img src="/medchat-logo.png" alt="MedChat Logo" className="welcome-logo" />
+              <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <RadarEffect icons={[
+                  { icon: <MedicationIcon fontSize="inherit" />, label: "Medication" },
+                  { icon: <MonitorHeartIcon fontSize="inherit" />, label: "Vitals" },
+                  { icon: <LocalHospitalIcon fontSize="inherit" />, label: "Hospitals" },
+                  { icon: <HealthAndSafetyIcon fontSize="inherit" />, label: "Prevention" },
+                  { icon: <BiotechIcon fontSize="inherit" />, label: "Diagnostics" },
+                  { icon: <DescriptionOutlinedIcon fontSize="inherit" />, label: "Reports" },
+                  { icon: <ScienceIcon fontSize="inherit" />, label: "Research" }
+                ]} />
+                <div className="welcome-screen" id="welcomeScreen" style={{ position: 'relative', zIndex: 10 }}>
+                  <div className="welcome-logo-wrapper">
+                    <img src="/medchat-logo.png" alt="MedChat Logo" className="welcome-logo" />
+                  </div>
+                  <h1 className="welcome-title">
+                    {(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}
+                  </h1>
+                  <p className="welcome-subtitle">I'm MedChat, your AI assistant for medical guidance and symptom analysis.</p>
                 </div>
-                <h1 className="welcome-title">
-                  {(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}
-                </h1>
-                <p className="welcome-subtitle">I'm MedChat, your AI assistant for medical guidance and symptom analysis.</p>
               </div>
             ) : (
               messages.map((msg, idx) => (
