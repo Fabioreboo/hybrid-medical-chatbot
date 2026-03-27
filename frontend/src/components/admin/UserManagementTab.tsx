@@ -17,7 +17,9 @@ import {
   Tooltip,
   Dialog,
   Zoom,
+  useTheme,
 } from '@mui/material';
+import { useThemeMode } from '../../contexts/ThemeContext';
 import {
   AdminPanelSettings as AdminIcon,
   Block as BlockIcon,
@@ -42,6 +44,15 @@ interface User {
 export const UserManagementTab: React.FC = () => {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
+  const { darkMode } = useThemeMode();
+  const theme = useTheme();
+
+  const isDark = darkMode;
+  const textColor = isDark ? '#ffffff' : '#1a1a1a';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.65)';
+  const glassBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.85)';
+  const glassBorder = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
+  const tableHeaderBg = isDark ? 'rgba(20, 20, 25, 0.8)' : 'rgba(245, 245, 250, 0.85)';
 
   const getHeaders = () => {
     const headers: Record<string, string> = {
@@ -85,32 +96,50 @@ export const UserManagementTab: React.FC = () => {
   return (
     <Fade in={true} timeout={600}>
       <Box sx={{ width: '100%', mt: 1 }}>
-        <Box sx={{ p: 4, pt: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <Box sx={{ 
+          p: 4, 
+          pt: 2, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          borderBottom: `1px solid ${glassBorder}` 
+        }}>
           <Box>
-            <Typography variant="h5" fontWeight="700" color="white" gutterBottom>
+            <Typography variant="h5" fontWeight="700" color={textColor} gutterBottom>
               User Management
             </Typography>
-            <Typography variant="body2" color="rgba(255, 255, 255, 0.6)">
+            <Typography variant="body2" color={secondaryTextColor}>
               Manage access, roles, and status of global registered users.
             </Typography>
           </Box>
           <Chip 
             label={`${users?.length || 0} Total Users`} 
-            color="primary" 
             variant="outlined" 
-            sx={{ fontWeight: 'bold', borderRadius: '12px' }} 
+            sx={{ 
+              fontWeight: 'bold', 
+              borderRadius: '12px',
+              color: theme.palette.primary.main,
+              borderColor: `${theme.palette.primary.main}44`,
+              bgcolor: isDark ? `${theme.palette.primary.main}11` : `${theme.palette.primary.main}08`,
+            }} 
           />
         </Box>
 
-        <TableContainer sx={{ maxHeight: '65vh' }}>
-          <Table stickyHeader>
+        <TableContainer sx={{ 
+          overflowX: 'auto',
+          background: glassBg,
+          backdropFilter: 'blur(10px)',
+          borderRadius: 0,
+          boxShadow: isDark ? 'none' : 'inset 0 0 40px rgba(0,0,0,0.02)'
+        }}>
+          <Table sx={{ minWidth: 700 }}>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36' }}>User</TableCell>
-                <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36' }}>Queries</TableCell>
-                <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36' }}>Status</TableCell>
-                <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36' }}>Joined</TableCell>
-                <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36', width: 220 }}>Actions</TableCell>
+                <TableCell sx={{ bgcolor: tableHeaderBg, color: secondaryTextColor, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', borderBottom: `1px solid ${glassBorder}`, position: 'sticky', top: 0, zIndex: 1 }}>User</TableCell>
+                <TableCell sx={{ bgcolor: tableHeaderBg, color: secondaryTextColor, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', borderBottom: `1px solid ${glassBorder}`, position: 'sticky', top: 0, zIndex: 1 }}>Queries</TableCell>
+                <TableCell sx={{ bgcolor: tableHeaderBg, color: secondaryTextColor, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', borderBottom: `1px solid ${glassBorder}`, position: 'sticky', top: 0, zIndex: 1 }}>Status</TableCell>
+                <TableCell sx={{ bgcolor: tableHeaderBg, color: secondaryTextColor, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', borderBottom: `1px solid ${glassBorder}`, position: 'sticky', top: 0, zIndex: 1 }}>Joined</TableCell>
+                <TableCell sx={{ bgcolor: tableHeaderBg, color: secondaryTextColor, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', borderBottom: `1px solid ${glassBorder}`, width: 220, position: 'sticky', top: 0, zIndex: 1 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -119,8 +148,8 @@ export const UserManagementTab: React.FC = () => {
                   key={user.id} 
                   sx={{ 
                     transition: 'all 0.2s',
-                    '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.03)' },
-                    '& td': { borderBottom: '1px solid #2e2e36' }
+                    '&:hover': { bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)' },
+                    '& td': { borderBottom: `1px solid ${glassBorder}` }
                   }}
                 >
                   <TableCell>
@@ -134,20 +163,20 @@ export const UserManagementTab: React.FC = () => {
                         {user.username ? user.username.charAt(0).toUpperCase() : '?'}
                       </Avatar>
                       <Box>
-                        <Typography variant="body2" fontWeight="600" color="white" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" fontWeight="600" color={textColor} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           {user.username || 'System User'}
                           {user.email === currentUser?.email && (
-                            <Chip label="YOU" size="small" sx={{ height: 16, fontSize: '0.6rem', fontWeight: 'bold', bgcolor: 'secondary.main', color: 'white' }} />
+                            <Chip label="YOU" size="small" sx={{ height: 16, fontSize: '0.6rem', fontWeight: 'bold', bgcolor: theme.palette.secondary.main, color: 'white' }} />
                           )}
                         </Typography>
-                        <Typography variant="caption" color="rgba(255,255,255,0.5)">
+                        <Typography variant="caption" color={secondaryTextColor}>
                           {user.email || 'No Email'}
                         </Typography>
                       </Box>
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" color="rgba(255,255,255,0.7)" fontWeight="bold">
+                    <Typography variant="body2" color={textColor} fontWeight="bold">
                         {user.query_count || 0}
                     </Typography>
                   </TableCell>
@@ -160,14 +189,20 @@ export const UserManagementTab: React.FC = () => {
                         fontWeight: 'bold', 
                         fontSize: '0.7rem', 
                         height: 22,
-                        bgcolor: !user.is_banned ? 'rgba(46, 125, 50, 0.15)' : 'rgba(211, 47, 47, 0.15)',
-                        color: !user.is_banned ? '#66bb6a' : '#ef5350',
+                        bgcolor: !user.is_banned 
+                          ? (isDark ? 'rgba(46, 125, 50, 0.15)' : 'rgba(46, 125, 50, 0.08)')
+                          : (isDark ? 'rgba(211, 47, 47, 0.15)' : 'rgba(211, 47, 47, 0.08)'),
+                        color: !user.is_banned 
+                          ? (isDark ? '#66bb6a' : '#2e7d32')
+                          : (isDark ? '#ef5350' : '#c62828'),
                         border: '1px solid',
-                        borderColor: !user.is_banned ? 'rgba(102, 187, 106, 0.3)' : 'rgba(239, 83, 80, 0.3)'
+                        borderColor: !user.is_banned 
+                          ? (isDark ? 'rgba(102, 187, 106, 0.3)' : 'rgba(46, 125, 50, 0.2)')
+                          : (isDark ? 'rgba(239, 83, 80, 0.3)' : 'rgba(211, 47, 47, 0.2)')
                       }}
                     />
                   </TableCell>
-                  <TableCell sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                  <TableCell sx={{ color: secondaryTextColor }}>
                     {format(new Date(user.created_at || new Date()), 'MMM dd, yyyy')}
                   </TableCell>
                   <TableCell>
@@ -246,11 +281,11 @@ export const UserManagementTab: React.FC = () => {
           fullWidth
           PaperProps={{
             sx: {
-              bgcolor: 'rgba(30, 30, 35, 0.95)',
+              bgcolor: isDark ? 'rgba(30, 30, 35, 0.95)' : 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(15px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 3,
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              border: `1px solid ${glassBorder}`,
+              borderRadius: 4,
+              boxShadow: isDark ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : '0 20px 40px -10px rgba(0, 0, 0, 0.15)',
               p: 1
             }
           }}
@@ -258,18 +293,19 @@ export const UserManagementTab: React.FC = () => {
           <Box sx={{ p: 2, textAlign: 'center' }}>
             <Avatar 
               sx={{ 
-                bgcolor: 'rgba(211, 47, 47, 0.2)', 
-                color: '#ef5350', 
                 mx: 'auto', mb: 1.5, 
-                width: 48, height: 48 
+                width: 48, height: 48,
+                bgcolor: `${theme.palette.error.main}22`,
+                color: theme.palette.error.main,
+                border: `1px solid ${theme.palette.error.main}44`
               }}
             >
               <DeleteIcon sx={{ fontSize: 24 }} />
             </Avatar>
-            <Typography variant="h6" fontWeight="700" color="white" gutterBottom sx={{ fontSize: '1.1rem' }}>
+            <Typography variant="h6" fontWeight="700" color={textColor} gutterBottom sx={{ fontSize: '1.1rem' }}>
               Confirm Deletion
             </Typography>
-            <Typography variant="body2" color="rgba(255, 255, 255, 0.6)" sx={{ mb: 3, fontSize: '0.85rem' }}>
+            <Typography variant="body2" color={secondaryTextColor} sx={{ mb: 3, fontSize: '0.85rem' }}>
               Are you sure you want to delete <strong>{userToDelete?.username || userToDelete?.email}</strong>?
             </Typography>
             <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
@@ -277,7 +313,7 @@ export const UserManagementTab: React.FC = () => {
                 onClick={() => setUserToDelete(null)}
                 variant="text"
                 size="small"
-                sx={{ color: 'rgba(255, 255, 255, 0.5)', borderRadius: 2, px: 2 }}
+                sx={{ color: secondaryTextColor, borderRadius: 2, px: 2 }}
               >
                 Cancel
               </Button>

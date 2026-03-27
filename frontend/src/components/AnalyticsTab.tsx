@@ -84,27 +84,38 @@ const StatCard: React.FC<{
   icon: React.ReactNode;
   color: string;
   gradient: string;
-}> = ({ label, value, icon, color, gradient }) => (
+  isDark: boolean;
+}> = ({ label, value, icon, color, gradient, isDark }) => (
   <Card sx={{ 
     height: '100%', 
-    background: 'rgba(255, 255, 255, 0.05)',
+    background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.95)',
     backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    border: '1px solid',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
     borderRadius: 4,
-    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
     '&:hover': {
       transform: 'translateY(-5px)',
-      boxShadow: `0 10px 30px ${color}33`,
-      borderColor: 'rgba(255, 255, 255, 0.2)'
+      boxShadow: isDark 
+        ? `0 10px 30px ${color}22` 
+        : `0 10px 30px ${color}15`,
+      borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.15)'
     }
   }}>
     <CardContent sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
-          <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: 600, letterSpacing: '0.5px', mb: 1 }} variant="caption">
+          <Typography sx={{ 
+            color: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)', 
+            fontWeight: 700, 
+            letterSpacing: '1px', 
+            mb: 1,
+            fontSize: '0.65rem'
+          }} variant="caption">
             {label.toUpperCase()}
           </Typography>
-          <Typography variant="h3" fontWeight="800" color="white">
+          <Typography variant="h4" fontWeight="800" sx={{ color: isDark ? '#ffffff' : '#1a1a1a' }}>
             {value}
           </Typography>
         </Box>
@@ -114,11 +125,11 @@ const StatCard: React.FC<{
             borderRadius: 3,
             p: 1.5,
             display: 'flex',
-            color: 'white',
-            boxShadow: `0 8px 20px ${color}44`
+            color: '#ffffff',
+            boxShadow: `0 8px 20px ${color}33`
           }}
         >
-          {React.cloneElement(icon as React.ReactElement, { sx: { fontSize: 32 } })}
+          {React.cloneElement(icon as React.ReactElement, { sx: { fontSize: 28 } })}
         </Box>
       </Box>
     </CardContent>
@@ -127,8 +138,18 @@ const StatCard: React.FC<{
 
 type SortOption = 'order' | 'alpha_asc' | 'alpha_desc' | 'auto_first' | 'auto_last';
 
+import { useThemeMode } from '../contexts/ThemeContext';
+
 export const AnalyticsTab: React.FC = () => {
   const { user } = useAuth();
+  const { darkMode } = useThemeMode();
+  const isDark = darkMode;
+  
+  const textColor = isDark ? '#ffffff' : '#1a1a1a';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.65)';
+  const glassBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.85)';
+  const glassBorder = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
+
   const queryClient = useQueryClient();
   const [showKbList, setShowKbList] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('order');
@@ -289,13 +310,13 @@ export const AnalyticsTab: React.FC = () => {
   ];
 
   return (
-    <Box>
+    <Box sx={{ py: 1 }}>
       {/* Header Section */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="800" color="white" gutterBottom>
+        <Typography variant="h4" fontWeight="800" color={textColor} gutterBottom sx={{ letterSpacing: '-0.5px' }}>
           System Analytics
         </Typography>
-        <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.6)', maxWidth: 600 }}>
+        <Typography variant="body1" sx={{ color: secondaryTextColor, maxWidth: 600 }}>
           Overview of system performance, user engagement, and knowledge base growth.
         </Typography>
       </Box>
@@ -309,6 +330,7 @@ export const AnalyticsTab: React.FC = () => {
             icon={<PeopleIcon />}
             color="#2196f3"
             gradient="linear-gradient(135deg, #2196f3 0%, #0d47a1 100%)"
+            isDark={isDark}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -318,6 +340,7 @@ export const AnalyticsTab: React.FC = () => {
             icon={<ChatIcon />}
             color="#00c853"
             gradient="linear-gradient(135deg, #00c853 0%, #1b5e20 100%)"
+            isDark={isDark}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -327,6 +350,7 @@ export const AnalyticsTab: React.FC = () => {
             icon={<KbIcon />}
             color="#d32f2f"
             gradient="linear-gradient(135deg, #f44336 0%, #d32f2f 100%)"
+            isDark={isDark}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -336,6 +360,7 @@ export const AnalyticsTab: React.FC = () => {
             icon={<PendingIcon />}
             color="#ff9800"
             gradient="linear-gradient(135deg, #ffb74d 0%, #ff9800 100%)"
+            isDark={isDark}
           />
         </Grid>
       </Grid>
@@ -344,17 +369,19 @@ export const AnalyticsTab: React.FC = () => {
       <Paper sx={{ 
         p: 3, 
         mb: 5, 
-        background: 'rgba(255, 255, 255, 0.03)',
+        background: glassBg,
+        backdropFilter: 'blur(10px)',
         borderRadius: 4,
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        overflow: 'hidden'
+        border: `1px solid ${glassBorder}`,
+        overflow: 'hidden',
+        boxShadow: isDark ? 'none' : '0 4px 12px rgba(0, 0, 0, 0.03)'
       }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: showKbList ? 3 : 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ p: 1, bgcolor: 'rgba(156, 39, 176, 0.1)', borderRadius: 2, display: 'flex' }}>
               <KbIcon sx={{ color: '#9c27b0' }} />
             </Box>
-            <Typography variant="h6" fontWeight="700" color="white">
+            <Typography variant="h6" fontWeight="700" color={textColor}>
               Knowledge Base Management
             </Typography>
             {duplicateCount > 0 && (
@@ -366,9 +393,9 @@ export const AnalyticsTab: React.FC = () => {
                 sx={{ 
                   cursor: 'pointer', 
                   fontWeight: 700,
-                  bgcolor: 'rgba(255, 152, 0, 0.15)',
-                  color: '#ffb74d',
-                  border: '1px solid rgba(255, 152, 0, 0.3)'
+                  bgcolor: isDark ? 'rgba(255, 152, 0, 0.15)' : 'rgba(255, 152, 0, 0.1)',
+                  color: isDark ? '#ffb74d' : '#e65100',
+                  border: isDark ? '1px solid rgba(255, 152, 0, 0.3)' : '1px solid rgba(230, 81, 0, 0.2)'
                 }}
               />
             )}
@@ -382,7 +409,7 @@ export const AnalyticsTab: React.FC = () => {
               />
             }
             label={
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+              <Typography variant="body2" sx={{ color: secondaryTextColor, fontWeight: 600 }}>
                 View Database
               </Typography>
             }
@@ -390,18 +417,30 @@ export const AnalyticsTab: React.FC = () => {
         </Box>
         
         {showKbList && (
-          <Box sx={{ mt: 2 }}>
-            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ mt: 3, pt: 3, borderTop: `1px solid ${glassBorder}` }}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap', alignItems: 'center' }}>
               <TextField
                 size="small"
                 placeholder="Search drug or symptom..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
+                sx={{ 
+                  flexGrow: 1, 
+                  maxWidth: 400,
+                  input: { color: textColor },
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: isDark ? 'rgba(0,0,0,0.4)' : '#ffffff',
+                    borderRadius: '12px',
+                    color: textColor,
+                    '& fieldset': { borderColor: glassBorder },
+                    '&:hover fieldset': { borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)' },
+                    '&.Mui-focused fieldset': { borderColor: 'primary.main' }
+                  }
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+                      <SearchIcon sx={{ fontSize: 20, color: secondaryTextColor }} />
                     </InputAdornment>
                   ),
                 }}
@@ -411,14 +450,38 @@ export const AnalyticsTab: React.FC = () => {
                 size="small"
                 startIcon={<SortIcon />}
                 onClick={(e) => setSortAnchor(e.currentTarget)}
-                sx={{ textTransform: 'none' }}
+                sx={{ 
+                  textTransform: 'none', 
+                  borderRadius: '12px',
+                  color: textColor,
+                  borderColor: glassBorder,
+                  bgcolor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.8)',
+                  px: 3,
+                  py: 1,
+                  height: 40,
+                  '&:hover': {
+                    borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+                  }
+                }}
               >
-                Sort: {sortBy === 'order' ? 'Order Saved' : sortBy === 'alpha_asc' ? 'A-Z' : 'Z-A'}
+                Sort Config
               </Button>
               <Menu
                 anchorEl={sortAnchor}
                 open={Boolean(sortAnchor)}
                 onClose={() => setSortAnchor(null)}
+                PaperProps={{
+                  sx: {
+                    bgcolor: isDark ? '#1a1a20' : '#ffffff',
+                    border: `1px solid ${glassBorder}`,
+                    borderRadius: 3,
+                    color: textColor,
+                    mt: 1,
+                    minWidth: 200,
+                    boxShadow: isDark ? 'none' : '0 10px 25px -5px rgba(0,0,0,0.1)'
+                  }
+                }}
               >
                 <MenuItem 
                   onClick={() => { setSortBy('order'); setSortAnchor(null); }}
@@ -456,31 +519,52 @@ export const AnalyticsTab: React.FC = () => {
                   <ListItemText>Manual Added First</ListItemText>
                 </MenuItem>
               </Menu>
-              <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center', ml: 'auto' }}>
+              <Typography variant="body2" sx={{ 
+                color: secondaryTextColor, 
+                ml: 'auto',
+                bgcolor: glassBg,
+                px: 2, py: 0.5,
+                borderRadius: '12px',
+                fontWeight: 600,
+                border: `1px solid ${glassBorder}`
+              }}>
                 {displayedEntries.length} {showDuplicatesOnly ? 'duplicates' : 'entries'}{!showDuplicatesOnly && sortedEntries.length !== (kbEntries?.length || 0) ? ` of ${kbEntries?.length}` : ''}
               </Typography>
             </Box>
 
             {displayedEntries.length === 0 && kbEntries && kbEntries.length > 0 && (
-              <Alert severity="info" sx={{ mb: 2 }}>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 4, 
+                  borderRadius: 3, 
+                  bgcolor: isDark ? 'rgba(33, 150, 243, 0.1)' : 'rgba(33, 150, 243, 0.05)', 
+                  color: isDark ? '#90caf9' : '#01579b', 
+                  border: `1px solid ${isDark ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.2)'}`,
+                  '& .MuiAlert-icon': { color: isDark ? '#90caf9' : '#0288d1' }
+                }}
+              >
                 {showDuplicatesOnly ? 'No duplicate entries.' : 'No entries match your search.'}
               </Alert>
             )}
 
             <TableContainer sx={{ 
+              borderRadius: 4,
+              border: `1px solid ${glassBorder}`,
+              bgcolor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.8)',
+              overflow: 'auto',
               maxHeight: 450,
-              borderRadius: 3,
-              border: '1px solid rgba(255, 255, 255, 0.05)',
               '&::-webkit-scrollbar': { width: '8px' },
-              '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '4px' }
+              '&::-webkit-scrollbar-thumb': { bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', borderRadius: '4px' },
+              '&::-webkit-scrollbar-thumb:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)' }
             }}>
               <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36' }}>Drug</TableCell>
-                    <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36' }}>Symptom</TableCell>
-                    <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36' }}>Mechanism</TableCell>
-                    <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36', width: 80, textAlign: 'center' }}>Actions</TableCell>
+                    <TableCell sx={{ bgcolor: isDark ? '#121215' : '#f8f9fa', color: secondaryTextColor, fontWeight: 800, textTransform: 'uppercase', fontSize: '0.75rem', borderBottom: `1px solid ${glassBorder}`, py: 2 }}>Drug</TableCell>
+                    <TableCell sx={{ bgcolor: isDark ? '#121215' : '#f8f9fa', color: secondaryTextColor, fontWeight: 800, textTransform: 'uppercase', fontSize: '0.75rem', borderBottom: `1px solid ${glassBorder}`, py: 2 }}>Symptom</TableCell>
+                    <TableCell sx={{ bgcolor: isDark ? '#121215' : '#f8f9fa', color: secondaryTextColor, fontWeight: 800, textTransform: 'uppercase', fontSize: '0.75rem', borderBottom: `1px solid ${glassBorder}`, py: 2 }}>Mechanism</TableCell>
+                    <TableCell sx={{ bgcolor: isDark ? '#121215' : '#f8f9fa', color: secondaryTextColor, fontWeight: 800, textTransform: 'uppercase', fontSize: '0.75rem', borderBottom: `1px solid ${glassBorder}`, py: 2, width: 80, textAlign: 'center' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -491,12 +575,12 @@ export const AnalyticsTab: React.FC = () => {
                       <TableRow 
                         key={`${entry.id || 'no-id'}-${entry.symptom || ''}-${index}`}
                         sx={{ 
-                          borderBottom: '1px solid rgba(255,255,255,0.05)',
-                          bgcolor: isDuplicate ? 'rgba(255, 152, 0, 0.05)' : 'transparent',
-                          '&:hover': { bgcolor: 'rgba(255,255,255,0.03)' }
+                          borderBottom: `1px solid ${glassBorder}`,
+                          bgcolor: isDuplicate ? (isDark ? 'rgba(255, 152, 0, 0.05)' : 'rgba(255, 152, 0, 0.03)') : 'transparent',
+                          '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }
                         }}
                       >
-                        <TableCell sx={{ fontWeight: 500 }}>
+                        <TableCell sx={{ fontWeight: 600, color: textColor }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             {isDuplicate && !showDuplicatesOnly && (
                               <MuiTooltip title="Duplicate entry">
@@ -511,16 +595,16 @@ export const AnalyticsTab: React.FC = () => {
                             )}
                           </Box>
                         </TableCell>
-                        <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>{entry.symptom || '-'}</TableCell>
-                        <TableCell sx={{ color: 'rgba(255,255,255,0.5)', maxWidth: 300 }}>
+                        <TableCell sx={{ color: textColor, opacity: 0.9 }}>{entry.symptom || '-'}</TableCell>
+                        <TableCell sx={{ color: secondaryTextColor, maxWidth: 300 }}>
                           {entry.mechanism ? entry.mechanism.substring(0, 60) + (entry.mechanism.length > 60 ? '...' : '') : '-'}
                         </TableCell>
                         <TableCell align="center">
                           <IconButton
                             size="small"
                             sx={{ 
-                              color: 'rgba(255, 82, 82, 0.5)',
-                              '&:hover': { color: '#ff5252', bgcolor: 'rgba(255, 82, 82, 0.1)' }
+                              color: isDark ? 'rgba(255, 82, 82, 0.5)' : 'rgba(211, 47, 47, 0.5)',
+                              '&:hover': { color: '#ff5252', bgcolor: isDark ? 'rgba(255, 82, 82, 0.1)' : 'rgba(211, 47, 47, 0.1)' }
                             }}
                             onClick={() => handleDelete(entry.id, entry.drug, entry.symptom, entry.source)}
                             disabled={deleteEntry.isLoading}
@@ -543,15 +627,16 @@ export const AnalyticsTab: React.FC = () => {
         <Grid item xs={12} md={8}>
           <Paper sx={{ 
             p: 3, 
-            background: 'rgba(255, 255, 255, 0.03)', 
+            background: glassBg, 
             borderRadius: 4, 
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            height: '100%'
+            border: `1px solid ${glassBorder}`,
+            height: '100%',
+            boxShadow: isDark ? 'none' : '0 4px 12px rgba(0, 0, 0, 0.03)'
           }}>
-            <Typography variant="h6" fontWeight="700" color="white" gutterBottom>
+            <Typography variant="h6" fontWeight="700" color={textColor} gutterBottom>
               Usage Trends
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.4)', mb: 3, display: 'block' }}>
+            <Typography variant="caption" sx={{ color: secondaryTextColor, mb: 3, display: 'block' }}>
               Weekly message volume and interaction levels
             </Typography>
             {stats?.chatsByDay?.length ? (
@@ -563,25 +648,26 @@ export const AnalyticsTab: React.FC = () => {
                       <stop offset="100%" stopColor="#2196f3" stopOpacity={0.2}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.1)'} vertical={false} />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }} 
-                    axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                    tick={{ fontSize: 11, fill: secondaryTextColor }} 
+                    axisLine={{ stroke: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}
                     tickLine={false}
                   />
                   <YAxis 
                     allowDecimals={false} 
-                    tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.5)' }}
+                    tick={{ fontSize: 11, fill: secondaryTextColor }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#1a1a20', 
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      backgroundColor: isDark ? '#1a1a20' : '#ffffff', 
+                      border: `1px solid ${glassBorder}`,
                       borderRadius: '8px',
-                      color: 'white'
+                      color: textColor,
+                      boxShadow: isDark ? 'none' : '0 10px 25px -5px rgba(0,0,0,0.1)'
                     }}
                     itemStyle={{ color: '#2196f3' }}
                   />
@@ -601,14 +687,15 @@ export const AnalyticsTab: React.FC = () => {
           <Paper sx={{ 
             p: 3, 
             height: '100%',
-            background: 'rgba(255, 255, 255, 0.03)', 
+            background: glassBg, 
             borderRadius: 4, 
-            border: '1px solid rgba(255, 255, 255, 0.1)' 
+            border: `1px solid ${glassBorder}`,
+            boxShadow: isDark ? 'none' : '0 4px 12px rgba(0, 0, 0, 0.03)'
           }}>
-            <Typography variant="h6" fontWeight="700" color="white" gutterBottom>
+            <Typography variant="h6" fontWeight="700" color={textColor} gutterBottom>
               User Distribution
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.4)', mb: 3, display: 'block' }}>
+            <Typography variant="caption" sx={{ color: secondaryTextColor, mb: 3, display: 'block' }}>
               Engagement status of total registered users
             </Typography>
             <ResponsiveContainer width="100%" height={220}>
@@ -629,13 +716,14 @@ export const AnalyticsTab: React.FC = () => {
                 </Pie>
                 <Legend 
                   wrapperStyle={{ paddingTop: '20px' }}
-                  formatter={(value) => <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>{value}</span>}
+                  formatter={(value) => <span style={{ color: secondaryTextColor, fontSize: '12px', fontWeight: 600 }}>{value}</span>}
                 />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1a1a20', 
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px'
+                    backgroundColor: isDark ? '#1a1a20' : '#ffffff', 
+                    border: `1px solid ${glassBorder}`,
+                    borderRadius: '8px',
+                    boxShadow: isDark ? 'none' : '0 10px 25px -5px rgba(0,0,0,0.1)'
                   }}
                 />
               </PieChart>
@@ -648,33 +736,35 @@ export const AnalyticsTab: React.FC = () => {
           <Grid item xs={12} md={12}>
             <Paper sx={{ 
               p: 3,
-              background: 'rgba(255, 255, 255, 0.03)', 
+              background: glassBg, 
               borderRadius: 4, 
-              border: '1px solid rgba(255, 255, 255, 0.1)'
+              border: `1px solid ${glassBorder}`,
+              boxShadow: isDark ? 'none' : '0 4px 12px rgba(0, 0, 0, 0.03)'
             }}>
-              <Typography variant="h6" fontWeight="700" color="white" gutterBottom>
+              <Typography variant="h6" fontWeight="700" color={textColor} gutterBottom>
                 Common Health Concerns
               </Typography>
-              <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.4)', mb: 3, display: 'block' }}>
+              <Typography variant="caption" sx={{ color: secondaryTextColor, mb: 3, display: 'block' }}>
                 Most frequently queried symptoms by patients
               </Typography>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={stats.topSymptoms} layout="vertical" margin={{ left: 40, right: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} horizontal={false} />
                   <XAxis type="number" hide />
                   <YAxis 
                     dataKey="symptom" 
                     type="category" 
                     width={100} 
-                    tick={{ fontSize: 12, fill: 'rgba(255,255,255,0.7)', fontWeight: 500 }} 
+                    tick={{ fontSize: 12, fill: secondaryTextColor, fontWeight: 500 }} 
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#1a1a20', 
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px'
+                      backgroundColor: isDark ? '#1a1a20' : '#ffffff', 
+                      border: `1px solid ${glassBorder}`,
+                      borderRadius: '8px',
+                      boxShadow: isDark ? 'none' : '0 10px 25px -5px rgba(0,0,0,0.1)'
                     }}
                   />
                   <Bar dataKey="count" fill="#9c27b0" radius={[0, 4, 4, 0]} name="Queries" barSize={20} />
@@ -691,13 +781,13 @@ export const AnalyticsTab: React.FC = () => {
         onClose={() => setDeleteDialog({ open: false, entry: null })}
         PaperProps={{
           sx: { 
-            bgcolor: '#1a1a20',
+            bgcolor: isDark ? '#1a1a20' : '#ffffff',
             backgroundImage: 'none',
             borderRadius: 6,
             width: '100%',
             maxWidth: '380px',
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+            border: `1px solid ${glassBorder}`,
+            boxShadow: isDark ? '0 20px 50px rgba(0,0,0,0.5)' : '0 20px 50px rgba(0,0,0,0.1)'
           }
         }}
       >
@@ -710,12 +800,12 @@ export const AnalyticsTab: React.FC = () => {
           }}>
             <DeleteIcon sx={{ color: '#ff5252', fontSize: 32 }} />
           </Box>
-          <Typography variant="h6" fontWeight="800" color="white">
+          <Typography variant="h6" fontWeight="800" color={textColor}>
             Remove from Database?
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ textAlign: 'center', pb: 4 }}>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 3 }}>
+          <Typography variant="body2" sx={{ color: secondaryTextColor, mb: 3 }}>
             Deleting <strong>{deleteDialog.entry?.drug}</strong> will permanently remove it from the knowledge base. This cannot be undone.
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
@@ -725,8 +815,8 @@ export const AnalyticsTab: React.FC = () => {
               onClick={() => setDeleteDialog({ open: false, entry: null })}
               sx={{ 
                 borderRadius: 3, py: 1.5, 
-                color: 'white', borderColor: 'rgba(255,255,255,0.2)',
-                '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.05)' }
+                color: textColor, borderColor: glassBorder,
+                '&:hover': { borderColor: textColor, bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }
               }}
             >
               Cancel

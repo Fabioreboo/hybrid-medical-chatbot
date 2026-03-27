@@ -26,7 +26,8 @@ import {
   InputAdornment,
   Select,
   MenuItem,
-  InputLabel
+  InputLabel,
+  useTheme
 } from '@mui/material';
 import {
   AdminPanelSettings as AdminIcon,
@@ -41,6 +42,7 @@ import { useQuery } from 'react-query';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { useAuth } from '../../contexts/AuthContext';
+import { useThemeMode } from '../../contexts/ThemeContext';
 
 interface AuditLog {
   id: string;
@@ -58,13 +60,23 @@ interface AuditLog {
 
 export const AuditLogsTab: React.FC = () => {
   const { user } = useAuth();
+  const { darkMode } = useThemeMode();
+  const theme = useTheme();
   
   const [dateFilter, setDateFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'admin_action' | 'user_query'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
   const [exportOpen, setExportOpen] = useState(false);
-  
+
+  const isDark = darkMode;
+  const textColor = isDark ? '#ffffff' : '#1a1a1a';
+  const secondaryTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.65)';
+  const glassBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.85)';
+  const glassBorder = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
+  const tableHeaderBg = isDark ? 'rgba(20, 20, 25, 0.8)' : 'rgba(245, 245, 250, 0.85)';
+  const popoverBg = isDark ? '#1a1a20' : '#ffffff';
+
   const getHeaders = () => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -88,7 +100,6 @@ export const AuditLogsTab: React.FC = () => {
     if (!auditLogs?.logs) return [];
     let logs = auditLogs.logs;
     
-    // 1. Date-based filtering with Timezone fix (using local yyyy-MM-dd)
     if (dateFilter) {
       logs = logs.filter((log: AuditLog) => {
         try {
@@ -101,12 +112,10 @@ export const AuditLogsTab: React.FC = () => {
       });
     }
 
-    // 2. Type filtering
     if (typeFilter !== 'all') {
       logs = logs.filter((log: AuditLog) => log.log_type === typeFilter);
     }
 
-    // 3. Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       logs = logs.filter((log: AuditLog) => {
@@ -142,7 +151,7 @@ export const AuditLogsTab: React.FC = () => {
         l.details || ''
       ].map(field => `"${(field || '').toString().replace(/"/g, '""')}"`).join(','));
       
-      const csv = [headers.join(','), ...rows].join('\\n');
+      const csv = [headers.join(','), ...rows].join('\n');
       const dataStr = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
       const el = document.createElement('a');
       el.setAttribute('href', dataStr);
@@ -156,17 +165,13 @@ export const AuditLogsTab: React.FC = () => {
 
   return (
     <Fade in={true} timeout={600}>
-      <Box 
-        sx={{ 
-          p: 0, 
-        }}
-      >
-        <Box sx={{ p: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <Box sx={{ width: '100%', mt: 1 }}>
+        <Box sx={{ p: 4, pt: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${glassBorder}` }}>
           <Box>
-            <Typography variant="h5" fontWeight="700" color="white" gutterBottom>
+            <Typography variant="h5" fontWeight="700" color={textColor} gutterBottom>
               System Audit Logs
             </Typography>
-            <Typography variant="body2" color="rgba(255, 255, 255, 0.6)">
+            <Typography variant="body2" color={secondaryTextColor}>
               Comprehensive timeline of all major user queries and administrative actions.
             </Typography>
           </Box>
@@ -179,19 +184,19 @@ export const AuditLogsTab: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               sx={{
                 width: 250,
-                input: { color: 'white' },
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
-                  bgcolor: 'rgba(255,255,255,0.05)',
-                  '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+                  bgcolor: isDark ? glassBg : '#ffffff',
+                  color: textColor,
+                  '& fieldset': { borderColor: glassBorder },
+                  '&:hover fieldset': { borderColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' },
                   '&.Mui-focused fieldset': { borderColor: 'primary.main' }
                 }
               }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon fontSize="small" sx={{ color: 'rgba(255,255,255,0.5)' }} />
+                    <SearchIcon fontSize="small" sx={{ color: secondaryTextColor }} />
                   </InputAdornment>
                 ),
               }}
@@ -201,11 +206,11 @@ export const AuditLogsTab: React.FC = () => {
               <IconButton 
                 onClick={(e) => setFilterAnchorEl(e.currentTarget)}
                 sx={{ 
-                  bgcolor: (dateFilter || typeFilter !== 'all' || searchQuery) ? 'primary.dark' : 'rgba(255,255,255,0.05)', 
-                  color: 'white',
+                  bgcolor: (dateFilter || typeFilter !== 'all' || searchQuery) ? (isDark ? 'primary.dark' : 'rgba(25, 118, 210, 0.1)') : glassBg, 
+                  color: (dateFilter || typeFilter !== 'all' || searchQuery) ? (isDark ? 'white' : 'primary.main') : textColor,
                   border: '1px solid',
-                  borderColor: (dateFilter || typeFilter !== 'all' || searchQuery) ? 'primary.main' : 'transparent',
-                  '&:hover': { bgcolor: (dateFilter || typeFilter !== 'all' || searchQuery) ? 'primary.main' : 'rgba(255,255,255,0.1)' }
+                  borderColor: (dateFilter || typeFilter !== 'all' || searchQuery) ? 'primary.main' : glassBorder,
+                  '&:hover': { bgcolor: (dateFilter || typeFilter !== 'all' || searchQuery) ? (isDark ? 'primary.main' : 'rgba(25, 118, 210, 0.2)') : isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
                 }}
               >
                 <FilterListIcon fontSize="small" />
@@ -216,9 +221,10 @@ export const AuditLogsTab: React.FC = () => {
               <IconButton 
                 onClick={() => setExportOpen(true)}
                 sx={{ 
-                  bgcolor: 'rgba(255,255,255,0.05)', 
-                  color: 'white',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                  bgcolor: glassBg, 
+                  color: textColor,
+                  border: `1px solid ${glassBorder}`,
+                  '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
                 }}
               >
                 <DownloadIcon fontSize="small" />
@@ -227,9 +233,14 @@ export const AuditLogsTab: React.FC = () => {
 
             <Chip 
               label={`${filteredLogs.length} Events`} 
-              color="info" 
               variant="outlined" 
-              sx={{ fontWeight: 'bold', borderRadius: '12px' }} 
+              sx={{ 
+                fontWeight: 'bold', 
+                borderRadius: '12px',
+                color: theme.palette.info.main,
+                borderColor: `${theme.palette.info.main}44`,
+                bgcolor: isDark ? `${theme.palette.info.main}11` : `${theme.palette.info.main}08`,
+              }} 
             />
           </Box>
         </Box>
@@ -242,32 +253,34 @@ export const AuditLogsTab: React.FC = () => {
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
           PaperProps={{
             sx: {
-              mt: 1, p: 2, bgcolor: '#1a1a20', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 2, color: 'white', width: 280
+              mt: 1, p: 2, bgcolor: popoverBg, border: `1px solid ${glassBorder}`,
+              borderRadius: 3, color: textColor, width: 280,
+              boxShadow: isDark ? '0 10px 40px rgba(0,0,0,0.5)' : '0 10px 40px rgba(0,0,0,0.1)'
             }
           }}
         >
           <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'bold' }}>Filter Logs</Typography>
 
           <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-            <InputLabel sx={{ color: 'rgba(255,255,255,0.7)', '&.Mui-focused': { color: 'primary.main' } }}>Filter by User</InputLabel>
+            <InputLabel sx={{ color: secondaryTextColor, '&.Mui-focused': { color: 'primary.main' } }}>Filter by User</InputLabel>
             <Select
               value={typeFilter}
               label="Filter by User"
               onChange={(e) => setTypeFilter(e.target.value as any)}
               sx={{
-                color: 'white',
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.2)' },
-                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.3)' },
+                color: textColor,
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: glassBorder },
+                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' },
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' },
-                '& .MuiSvgIcon-root': { color: 'rgba(255,255,255,0.7)' }
+                '& .MuiSvgIcon-root': { color: secondaryTextColor }
               }}
               MenuProps={{
                 PaperProps: {
                   sx: {
-                    bgcolor: '#2e2e36',
-                    color: 'white',
-                    border: '1px solid rgba(255,255,255,0.1)'
+                    bgcolor: popoverBg,
+                    color: textColor,
+                    border: `1px solid ${glassBorder}`,
+                    backgroundImage: 'none'
                   }
                 }
               }}
@@ -289,13 +302,14 @@ export const AuditLogsTab: React.FC = () => {
             InputLabelProps={{ shrink: true }}
             inputProps={{ min: '2026-03-21' }}
             sx={{
-              input: { color: 'white', '&::-webkit-calendar-picker-indicator': { filter: 'invert(1)' } },
               '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
-                '&.Mui-focused fieldset': { borderColor: 'primary.main' }
+                color: textColor,
+                '& fieldset': { borderColor: glassBorder },
+                '&:hover fieldset': { borderColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' },
+                '&.Mui-focused fieldset': { borderColor: 'primary.main' },
+                '& input::-webkit-calendar-picker-indicator': { filter: isDark ? 'invert(1)' : 'none' }
               },
-              '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' }
+              '& .MuiInputLabel-root': { color: secondaryTextColor }
             }}
           />
           <Button 
@@ -303,7 +317,7 @@ export const AuditLogsTab: React.FC = () => {
             variant="outlined" 
             color="inherit" 
             size="small" 
-            sx={{ mt: 2, borderColor: 'rgba(255,255,255,0.1)', opacity: 0.7 }}
+            sx={{ mt: 2, borderColor: glassBorder, color: secondaryTextColor, textTransform: 'none' }}
             onClick={() => { setDateFilter(''); setTypeFilter('all'); setSearchQuery(''); setFilterAnchorEl(null); }}
             startIcon={<ClearIcon />}
           >
@@ -311,7 +325,6 @@ export const AuditLogsTab: React.FC = () => {
           </Button>
         </Popover>
 
-        {/* Premium Export Dialog */}
         <Dialog 
           open={exportOpen} 
           onClose={() => setExportOpen(false)}
@@ -319,20 +332,21 @@ export const AuditLogsTab: React.FC = () => {
             sx: {
               width: '100%',
               maxWidth: '320px',
-              bgcolor: '#000000',
+              bgcolor: isDark ? 'rgba(20,20,25,0.95)' : '#ffffff',
               backdropFilter: 'blur(20px)',
-              color: 'white',
+              color: textColor,
               borderRadius: '20px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+              border: `1px solid ${glassBorder}`,
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              backgroundImage: 'none'
             }
           }}
         >
           <DialogTitle sx={{ pt: 3, pb: 1.5, textAlign: 'center' }}>
-            <Typography variant="subtitle1" fontWeight="800" gutterBottom>
+            <Typography variant="subtitle1" fontWeight="800" color={textColor} gutterBottom>
               Export Audit Logs
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+            <Typography variant="caption" sx={{ color: secondaryTextColor }}>
               Format to download system activity.
             </Typography>
           </DialogTitle>
@@ -342,41 +356,41 @@ export const AuditLogsTab: React.FC = () => {
                 onClick={() => handleExport('json')}
                 sx={{
                   flex: 1, py: 2, px: 1.5, 
-                  bgcolor: 'rgba(144,202,249,0.03)',
-                  border: '1px solid rgba(144,202,249,0.1)', 
+                  bgcolor: isDark ? 'rgba(144,202,249,0.03)' : 'rgba(25, 118, 210, 0.05)',
+                  border: `1px solid ${isDark ? 'rgba(144,202,249,0.1)' : 'rgba(25, 118, 210, 0.1)'}`, 
                   borderRadius: 3,
                   textAlign: 'center', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': { 
-                    bgcolor: 'rgba(144,202,249,0.08)',
+                    bgcolor: isDark ? 'rgba(144,202,249,0.08)' : 'rgba(25, 118, 210, 0.1)',
                     transform: 'translateY(-4px) scale(1.02)', 
                     borderColor: 'primary.main', 
-                    boxShadow: '0 12px 24px rgba(144,202,249,0.2)' 
+                    boxShadow: isDark ? '0 12px 24px rgba(144,202,249,0.2)' : '0 12px 24px rgba(25, 118, 210, 0.15)' 
                   }
                 }}
               >
-                <CodeIcon sx={{ fontSize: 36, color: '#90caf9', mb: 1, opacity: 0.9 }} />
-                <Typography variant="body2" fontWeight="700" color="white" gutterBottom>JSON</Typography>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block', fontSize: '0.65rem' }}>Raw Data</Typography>
+                <CodeIcon sx={{ fontSize: 36, color: isDark ? '#90caf9' : 'primary.main', mb: 1, opacity: 0.9 }} />
+                <Typography variant="body2" fontWeight="700" color={textColor} gutterBottom>JSON</Typography>
+                <Typography variant="caption" sx={{ color: secondaryTextColor, display: 'block', fontSize: '0.65rem' }}>Raw Data</Typography>
               </Box>
               <Box
                 onClick={() => handleExport('csv')}
                 sx={{
                   flex: 1, py: 2, px: 1.5, 
-                  bgcolor: 'rgba(206,147,216,0.03)',
-                  border: '1px solid rgba(206,147,216,0.1)', 
+                  bgcolor: isDark ? 'rgba(206,147,216,0.03)' : 'rgba(156, 39, 176, 0.05)',
+                  border: `1px solid ${isDark ? 'rgba(206,147,216,0.1)' : 'rgba(156, 39, 176, 0.1)'}`, 
                   borderRadius: 3,
                   textAlign: 'center', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': { 
-                    bgcolor: 'rgba(206,147,216,0.08)',
+                    bgcolor: isDark ? 'rgba(206,147,216,0.08)' : 'rgba(156, 39, 176, 0.1)',
                     transform: 'translateY(-4px) scale(1.02)', 
                     borderColor: 'secondary.main', 
-                    boxShadow: '0 12px 24px rgba(206,147,216,0.2)' 
+                    boxShadow: isDark ? '0 12px 24px rgba(206,147,216,0.2)' : '0 12px 24px rgba(156, 39, 176, 0.15)'
                   }
                 }}
               >
-                <TableChartIcon sx={{ fontSize: 36, color: '#ce93d8', mb: 1, opacity: 0.9 }} />
-                <Typography variant="body2" fontWeight="700" color="white" gutterBottom>CSV</Typography>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block', fontSize: '0.65rem' }}>Spreadsheet</Typography>
+                <TableChartIcon sx={{ fontSize: 36, color: isDark ? '#ce93d8' : 'secondary.main', mb: 1, opacity: 0.9 }} />
+                <Typography variant="body2" fontWeight="700" color={textColor} gutterBottom>CSV</Typography>
+                <Typography variant="caption" sx={{ color: secondaryTextColor, display: 'block', fontSize: '0.65rem' }}>Spreadsheet</Typography>
               </Box>
             </Stack>
           </DialogContent>
@@ -385,7 +399,7 @@ export const AuditLogsTab: React.FC = () => {
               onClick={() => setExportOpen(false)} 
               variant="text"
               sx={{ 
-                color: 'rgba(255,255,255,0.5)', 
+                color: secondaryTextColor, 
                 borderRadius: 2,
                 px: 3, py: 1,
                 textTransform: 'none',
@@ -393,9 +407,9 @@ export const AuditLogsTab: React.FC = () => {
                 fontSize: '0.85rem',
                 border: '1px solid transparent',
                 '&:hover': { 
-                  bgcolor: 'rgba(255,255,255,0.05)', 
-                  color: 'white',
-                  borderColor: 'rgba(255,255,255,0.1)'
+                  bgcolor: glassBg, 
+                  color: textColor,
+                  borderColor: glassBorder
                 }
               }}
             >
@@ -404,20 +418,20 @@ export const AuditLogsTab: React.FC = () => {
           </DialogActions>
         </Dialog>
 
-        <TableContainer>
+        <TableContainer sx={{ bgcolor: 'transparent' }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36', width: 160 }}>Time</TableCell>
-                <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36' }}>User</TableCell>
-                <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36' }}>Event Type</TableCell>
-                <TableCell sx={{ bgcolor: '#1a1a20', color: 'rgba(255,255,255,0.7)', fontWeight: 600, borderBottom: '1px solid #2e2e36', width: '45%' }}>Action / Query</TableCell>
+                <TableCell sx={{ bgcolor: tableHeaderBg, color: secondaryTextColor, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', borderBottom: `1px solid ${glassBorder}` }}>Time</TableCell>
+                <TableCell sx={{ bgcolor: tableHeaderBg, color: secondaryTextColor, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', borderBottom: `1px solid ${glassBorder}` }}>User</TableCell>
+                <TableCell sx={{ bgcolor: tableHeaderBg, color: secondaryTextColor, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', borderBottom: `1px solid ${glassBorder}` }}>Event Type</TableCell>
+                <TableCell sx={{ bgcolor: tableHeaderBg, color: secondaryTextColor, fontWeight: 700, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', borderBottom: `1px solid ${glassBorder}`, width: '45%' }}>Action / Query</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredLogs.length === 0 && (
                  <TableRow>
-                   <TableCell colSpan={4} align="center" sx={{ py: 6, color: 'rgba(255,255,255,0.4)' }}>
+                   <TableCell colSpan={4} align="center" sx={{ py: 6, color: secondaryTextColor, borderBottom: `1px solid ${glassBorder}` }}>
                      {dateFilter ? "No system activity found for the selected date." : "No recent system activity found."}
                    </TableCell>
                  </TableRow>
@@ -427,12 +441,11 @@ export const AuditLogsTab: React.FC = () => {
                   key={log.id + log.log_type}
                   sx={{ 
                     transition: 'all 0.2s',
-                    '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.03)' },
-                    '& td': { borderBottom: '1px solid #2e2e36' }
+                    '&:hover': { bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)' },
+                    '& td': { borderBottom: `1px solid ${glassBorder}` }
                   }}
                 >
-                  <TableCell sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                    {/* 2. Full Year Timestamps for clarity */}
+                  <TableCell sx={{ color: textColor }}>
                     {format(new Date(log.created_at || new Date()), 'MMM dd yyyy, HH:mm')}
                   </TableCell>
                   
@@ -440,14 +453,16 @@ export const AuditLogsTab: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Avatar 
                         sx={{ 
-                          bgcolor: log.log_type === 'admin_action' ? 'secondary.dark' : 'primary.dark',
-                          width: 32, height: 32, fontWeight: 'bold', fontSize: '0.85rem' 
+                          bgcolor: log.log_type === 'admin_action' ? 'secondary.main' : 'primary.main',
+                          width: 32, height: 32, fontWeight: 'bold', fontSize: '0.85rem',
+                          color: '#ffffff',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                         }}
                       >
                         {log.username ? log.username.charAt(0).toUpperCase() : '?'}
                       </Avatar>
                       <Box>
-                        <Typography variant="body2" fontWeight="600" color="white">
+                        <Typography variant="body2" fontWeight="600" color={textColor}>
                           {log.username || 'System'}
                         </Typography>
                       </Box>
@@ -460,24 +475,23 @@ export const AuditLogsTab: React.FC = () => {
                       label={log.log_type === 'admin_action' ? 'ADMIN ACTION' : 'USER QUERY'}
                       size="small"
                       sx={{ 
-                        bgcolor: log.log_type === 'admin_action' ? 'rgba(156, 39, 176, 0.15)' : 'rgba(33, 150, 243, 0.15)', 
-                        color: log.log_type === 'admin_action' ? '#ce93d8' : '#90caf9',
+                        bgcolor: log.log_type === 'admin_action' ? (isDark ? 'rgba(156, 39, 176, 0.15)' : 'rgba(156, 39, 176, 0.08)') : (isDark ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.08)'), 
+                        color: log.log_type === 'admin_action' ? (isDark ? '#ce93d8' : 'secondary.main') : (isDark ? '#90caf9' : 'primary.main'),
                         fontWeight: 'bold', fontSize: '0.65rem', letterSpacing: 0.5,
-                        borderColor: log.log_type === 'admin_action' ? 'rgba(206, 147, 216, 0.3)' : 'rgba(144, 202, 249, 0.3)',
+                        borderColor: log.log_type === 'admin_action' ? 'rgba(156, 39, 176, 0.3)' : 'rgba(156, 39, 176, 0.2)',
                         border: '1px solid'
                       }}
                     />
                   </TableCell>
                   
-                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                  <TableCell sx={{ color: textColor }}>
                     {log.log_type === 'admin_action' ? (
                       <Typography variant="body2">
-                        <strong style={{ color: '#ce93d8' }}>{log.action}</strong>
+                        <strong style={{ color: isDark ? '#ce93d8' : theme.palette.secondary.main }}>{log.action}</strong>
                         {log.details && <span style={{ opacity: 0.7 }}> — {log.details}</span>}
                       </Typography>
                     ) : (
                       <Box>
-                        {/* 4. Simplified User Message Display (No symptom chip) */}
                         <Typography variant="body2" sx={{ fontStyle: 'italic', opacity: 0.9 }}>
                           "{log.user_message}"
                         </Typography>
