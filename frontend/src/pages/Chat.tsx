@@ -726,14 +726,13 @@ const Chat: React.FC = () => {
           <div className="chat-area" id="chatMessages">
             {messages.length === 0 ? (
               <div className="welcome-screen" id="welcomeScreen">
-                <div className="welcome-avatar-wrapper">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="welcome-icon">
-                    <path d="M12 2L12 22M2 12L22 12" strokeLinecap="round" />
-                    <circle cx="12" cy="12" r="10" />
-                  </svg>
+                <div className="welcome-logo-wrapper">
+                  <img src="/medchat-logo.png" alt="MedChat Logo" className="welcome-logo" />
                 </div>
-                <h1 className="welcome-title">Good afternoon</h1>
-                <p className="welcome-subtitle">I'm MediChat, an AI assistant to help you understand your symptoms.</p>
+                <h1 className="welcome-title">
+                  {(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}
+                </h1>
+                <p className="welcome-subtitle">I'm MedChat, your AI assistant for medical guidance and symptom analysis.</p>
               </div>
             ) : (
               messages.map((msg, idx) => (
@@ -742,10 +741,7 @@ const Chat: React.FC = () => {
                     {msg.role === 'bot' ? (
                       <>
                         <div className="bot-avatar">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 2L12 22M2 12L22 12" strokeLinecap="round" />
-                            <circle cx="12" cy="12" r="10" />
-                          </svg>
+                          <img src="/medchat-logo.png" alt="MedChat" className="bot-avatar-img" />
                         </div>
                         <div className="bot-content-wrapper">
                           <div className="bot-message-container">
