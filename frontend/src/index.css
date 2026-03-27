@@ -1066,10 +1066,10 @@ body {
 }
 
 .welcome-logo {
-    width: 160px;
-    height: 160px;
+    width: 100px;
+    height: 100px;
     object-fit: contain;
-    border-radius: 24px;
+    border-radius: 20px;
     display: block;
 }
 
