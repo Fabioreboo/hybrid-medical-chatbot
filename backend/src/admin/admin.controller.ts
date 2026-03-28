@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards, Query, Request } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, Query, Request, Logger } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminService } from './admin.service';
 import { User } from '../users/user.entity';
@@ -7,6 +7,8 @@ import { ConfigService } from '@nestjs/config';
 
 @Controller('admin')
 export class AdminController {
+  private readonly logger = new Logger(AdminController.name);
+
   constructor(
     private readonly adminService: AdminService,
     private readonly configService: ConfigService,
@@ -23,6 +25,25 @@ export class AdminController {
       return { success: true };
     }
     return { success: false, message: 'Invalid admin password' };
+  }
+
+  @Post('verify-pin')
+  @UseGuards(AuthGuard('jwt'))
+  async verifyPin(@Body('pin') pin: string, @Request() req) {
+    const user = req.user as User;
+    await this.adminService.ensureAdmin(user);
+    
+    const correctPin = process.env.ADMIN_PIN || '1234';
+    this.logger.log(`========== PIN CHECK ==========`);
+    this.logger.log(`Received PIN: [${pin}]`);
+    this.logger.log(`Correct PIN: [${correctPin}]`);
+    this.logger.log(`Match: ${pin === correctPin}`);
+    this.logger.log(`================================`);
+    
+    if (pin === correctPin) {
+      return { success: true };
+    }
+    return { success: false, message: 'Invalid PIN' };
   }
 
   @Get('users')

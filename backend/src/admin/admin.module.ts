@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
 import { UsersModule } from '../users/users.module';
@@ -12,6 +13,7 @@ import { ChatMessage } from '../chat/chat.entity';
 
 @Module({
   imports: [
+    ConfigModule,
     TypeOrmModule.forFeature([KnowledgeBase, User, AuditLog, ChatMessage]),
     UsersModule,
     KBModule,
