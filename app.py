@@ -475,12 +475,65 @@ def api_admin_kb_approved():
     return jsonify(all_entries)
 
 
-@app.route("/api/admin/kb/stats", methods=["GET"])
+@app.route("/api/admin/kb/<int:entry_id>", methods=["DELETE"])
 @admin_required
-def api_admin_kb_stats():
-    from backend.query_engine import get_kb_stats
+def api_admin_kb_delete(entry_id):
+    from backend.chat_db import log_admin_action
+    
+    source = request.args.get("source", "medical_kb")
+    symptom_name = "Unknown"
+    
+    try:
+        if source == "medical_kb":
+            # Delete from curated medical_knowledge
+            kb_path = os.path.join(os.path.dirname(__file__), "medical kb/medical_kb.db")
+            conn = sqlite3.connect(kb_path)
+            cur = conn.cursor()
+            
+            # Get symptom name for logging before deletion using ROWID
+            row = cur.execute("SELECT symptom FROM medical_knowledge WHERE ROWID = ?", (entry_id,)).fetchone()
+            if row:
+                symptom_name = row[0]
+                cur.execute("DELETE FROM medical_knowledge WHERE ROWID = ?", (entry_id,))
+                
+            conn.commit()
+            conn.close()
+            
+        else:
+            # Delete from kb_requests (chat.db)
+            # Use the correct relative path for chat.db via DB_PATH import
+            conn = sqlite3.connect(DB_PATH)
+            cur = conn.cursor()
+            
+            # Get symptom name for logging
+            row = cur.execute("SELECT suggested_symptom FROM kb_requests WHERE id = ?", (entry_id,)).fetchone()
+            if row:
+                symptom_name = row[0]
+                cur.execute("DELETE FROM kb_requests WHERE id = ?", (entry_id,))
+                
+            conn.commit()
+            conn.close()
 
-    return jsonify(get_kb_stats())
+        # Log admin action
+        log_admin_action(
+            g.user_id,
+            g.user_email,
+            g.username,
+            "delete_kb_entry",
+            "kb_entry",
+            entry_id,
+            f"Deleted {source} entry: {symptom_name}",
+        )
+        
+        # Refresh the cache in query_engine to reflect the deletion
+        from backend.query_engine import refresh_kb_cache
+        refresh_kb_cache()
+        
+        return jsonify({"success": True})
+
+    except Exception as e:
+        print(f"[admin_kb] Delete failed: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/admin/kb/<int:entry_id>", methods=["DELETE"])
@@ -506,6 +559,14 @@ def api_delete_kb_entry(entry_id):
         return jsonify({"success": False, "message": "Entry not found"}), 404
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/admin/kb/stats", methods=["GET"])
+@admin_required
+def api_admin_kb_stats():
+    from backend.query_engine import get_kb_stats
+
+    return jsonify(get_kb_stats())
 
 
 @app.route("/api/admin/users", methods=["GET"])

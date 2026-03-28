@@ -163,7 +163,7 @@ export const UserManagementTab: React.FC = () => {
                         {user.username ? user.username.charAt(0).toUpperCase() : '?'}
                       </Avatar>
                       <Box>
-                        <Typography variant="body2" fontWeight="600" color={textColor} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" component="span" fontWeight="600" color={textColor} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           {user.username || 'System User'}
                           {user.email === currentUser?.email && (
                             <Chip label="YOU" size="small" sx={{ height: 16, fontSize: '0.6rem', fontWeight: 'bold', bgcolor: theme.palette.secondary.main, color: 'white' }} />
