@@ -535,33 +535,40 @@ const Chat: React.FC = () => {
                 vertical: 'bottom',
                 horizontal: 'right',
               }}
-              sx={{
-                '& .MuiPaper-root': {
-                  borderRadius: '12px',
-                  minWidth: '200px',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                  mt: -1,
-                  backgroundColor: 'var(--card)',
-                  color: 'var(--foreground)',
-                  border: '1px solid var(--border)'
+            MenuListProps={{ sx: { p: 1 } }}
+              slotProps={{
+                paper: {
+                  sx: {
+                    borderRadius: '16px',
+                    minWidth: '200px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                    mt: -1,
+                    backgroundColor: 'var(--card)',
+                    backgroundImage: 'none',
+                    backdropFilter: 'blur(12px)',
+                    color: 'var(--foreground)',
+                    border: '1px solid var(--border)',
+                    p: 0,
+                  }
                 }
               }}
             >
-              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', marginBottom: '4px' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{user?.name}</Typography>
-                <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
-              </div>
+              <Box sx={{ px: 1, py: 0.5, mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>{user?.name || 'User'}</Typography>
+                <Typography variant="caption" sx={{ color: 'var(--muted-foreground)' }}>{user?.email}</Typography>
+              </Box>
+              <Box sx={{ height: '1px', backgroundColor: 'var(--border)', mb: 1, mx: -1 }} />
 
 
               {user?.role === 'admin' && (
                 <MenuItem onClick={() => {
                   setUserAnchorEl(null);
                   navigate('/admin');
-                }}>
-                  <ListItemIcon>
+                }} sx={{ borderRadius: '8px', minHeight: '36px', mb: 0.5, '&:hover': { backgroundColor: 'var(--accent)' } }}>
+                  <ListItemIcon sx={{ minWidth: 32 }}>
                     <AdminPanelSettingsIcon fontSize="small" sx={{ color: 'var(--primary)' }} />
                   </ListItemIcon>
-                  <ListItemText primary="🛡️ Admin Panel" />
+                  <ListItemText primary="Admin Panel" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }} />
                 </MenuItem>
               )}
 
@@ -569,11 +576,11 @@ const Chat: React.FC = () => {
                 setUserAnchorEl(null);
                 logout();
                 navigate('/');
-              }}>
-                <ListItemIcon>
-                   <LogoutIcon fontSize="small" sx={{ color: 'var(--danger-100)' }} />
+              }} sx={{ borderRadius: '8px', minHeight: '36px', '&:hover': { backgroundColor: 'rgba(239, 68, 68, 0.1)' } }}>
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                   <LogoutIcon fontSize="small" sx={{ color: '#ef4444' }} />
                 </ListItemIcon>
-                <ListItemText primary="Logout" />
+                <ListItemText primary="Logout" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500, color: '#ef4444' }} />
               </MenuItem>
             </Menu>
           </div>

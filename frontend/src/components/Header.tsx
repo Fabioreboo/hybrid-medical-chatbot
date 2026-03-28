@@ -10,6 +10,8 @@ import {
   Box,
   IconButton,
   Tooltip,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   AccountCircle,
@@ -192,25 +194,33 @@ export const Header: React.FC = () => {
             anchorEl={anchorEl} 
             open={Boolean(anchorEl)} 
             onClose={handleClose}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            MenuListProps={{ sx: { p: 1 } }}
             PaperProps={{
               sx: {
-                mt: 1.5,
-                backgroundColor: '#1a1a1a',
-                color: 'white',
-                border: '1px solid rgba(255,255,255,0.1)',
+                mt: 1,
+                backgroundColor: darkMode ? 'rgba(20, 20, 20, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(12px)',
+                color: darkMode ? 'white' : 'black',
+                border: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
                 minWidth: '200px',
-                borderRadius: '12px'
+                borderRadius: '16px',
+                boxShadow: darkMode ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.1)',
+                p: 0
               }
             }}
           >
-            <MenuItem disabled sx={{ opacity: '1 !important' }}>
-              <Typography variant="body2" color="rgba(255,255,255,0.5)">
-                {user?.email}
-              </Typography>
-            </MenuItem>
-            <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
-              <Logout fontSize="small" sx={{ mr: 1, color: '#f87171' }} />
-              Logout
+            <Box sx={{ px: 1, py: 0.5, mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>{user?.name || 'User'}</Typography>
+                <Typography variant="caption" sx={{ color: darkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}>{user?.email}</Typography>
+            </Box>
+            <Box sx={{ height: '1px', backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', mb: 1, mx: -1 }} />
+            <MenuItem onClick={handleLogout} sx={{ borderRadius: '8px', fontSize: '0.85rem', '&:hover': { backgroundColor: 'rgba(248, 113, 113, 0.1)' } }}>
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                 <Logout fontSize="small" sx={{ color: '#f87171' }} />
+              </ListItemIcon>
+              <ListItemText primary="Logout" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500, color: '#f87171' }} />
             </MenuItem>
           </Menu>
         </Box>
