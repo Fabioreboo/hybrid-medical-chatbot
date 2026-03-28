@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from 'react-query';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { apiAxios } from '../api/axiosConfig';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Alert, Menu, MenuItem, IconButton, ListItemIcon, ListItemText, Tooltip, Box } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Alert, Menu, MenuItem, IconButton, ListItemIcon, ListItemText, Tooltip, Box, CircularProgress, AppBar, Toolbar, Avatar } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DescriptionIcon from '@mui/icons-material/Description';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
@@ -16,6 +16,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
@@ -25,8 +26,12 @@ import ScienceIcon from '@mui/icons-material/Science';
 import BiotechIcon from '@mui/icons-material/Biotech';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import SendIcon from '@mui/icons-material/Send';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import MicIcon from '@mui/icons-material/Mic';
 import jsPDF from 'jspdf';
 import RadarEffect, { IconItem } from '../components/ui/RadarEffect';
+import { useThemeMode } from '../contexts/ThemeContext';
 
 interface Message {
   role: 'user' | 'bot';
@@ -48,12 +53,14 @@ interface Thread {
 
 const Chat: React.FC = () => {
   const { user, logout } = useAuth();
+  const { darkMode, toggleDarkMode } = useThemeMode(); // Use global theme
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [savedKbIndices, setSavedKbIndices] = useState<Set<number>>(new Set());
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
@@ -74,11 +81,6 @@ const Chat: React.FC = () => {
   const [userAnchorEl, setUserAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteThreadId, setDeleteThreadId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark' ||
-      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch threads from Flask backend
@@ -87,11 +89,11 @@ const Chat: React.FC = () => {
       const email = user?.email || sessionStorage.getItem('userEmail') || '';
       const name = user?.name || sessionStorage.getItem('userName') || 'User';
       const role = user?.role || sessionStorage.getItem('userRole') || 'user';
-      
+
       if (!email) return;
-      
-      const res = await fetch('/api/threads', { 
-        headers: { 
+
+      const res = await fetch('/api/threads', {
+        headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'X-User-Email': email,
           'X-User-Name': name,
@@ -141,13 +143,13 @@ const Chat: React.FC = () => {
     const email = user?.email || sessionStorage.getItem('userEmail') || '';
     const name = user?.name || sessionStorage.getItem('userName') || 'User';
     const role = user?.role || sessionStorage.getItem('userRole') || 'user';
-    
+
     setCurrentThreadId(threadId);
     setMessages([]);
     setSidebarOpen(false);
     try {
       const res = await fetch(`/api/threads/${threadId}`, {
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'X-User-Email': email,
           'X-User-Name': name,
@@ -183,11 +185,11 @@ const Chat: React.FC = () => {
     const email = user?.email || sessionStorage.getItem('userEmail') || '';
     const name = user?.name || sessionStorage.getItem('userName') || 'User';
     const role = user?.role || sessionStorage.getItem('userRole') || 'user';
-    
+
     try {
       await fetch(`/api/threads/${deleteThreadId}`, {
         method: 'DELETE',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'X-User-Email': email,
           'X-User-Name': name,
@@ -223,7 +225,7 @@ const Chat: React.FC = () => {
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'X-User-Email': email,
@@ -277,7 +279,7 @@ const Chat: React.FC = () => {
     try {
       let rawData = structuredData.data || structuredData;
       let finalData;
-      
+
       if (typeof rawData === 'string') {
         try {
           finalData = JSON.parse(rawData.replace(/'/g, '"'));
@@ -310,7 +312,7 @@ const Chat: React.FC = () => {
 
       // Cache the result
       setKbRequestStatus(prev => ({ ...prev, [index]: response.data }));
-      
+
       return response.data;
     } catch (error) {
       console.error('Error checking KB request:', error);
@@ -321,13 +323,13 @@ const Chat: React.FC = () => {
   const saveToKb = async (structuredData: any, index: number) => {
     // Check if already requested
     const status = await checkKbRequest(structuredData, index);
-    
+
     if (status.exists) {
       // Already exists - update cache and show message
       setKbRequestStatus(prev => ({ ...prev, [index]: status }));
       return;
     }
-    
+
     setCurrentStructuredData({ data: structuredData, index });
     setSaveDialogOpen(true);
   };
@@ -339,7 +341,7 @@ const Chat: React.FC = () => {
       // Extract data - handle different possible structures
       let rawData = currentStructuredData.data || currentStructuredData;
       let finalData;
-      
+
       if (typeof rawData === 'string') {
         try {
           finalData = JSON.parse(rawData.replace(/'/g, '"'));
@@ -370,29 +372,29 @@ const Chat: React.FC = () => {
       // KB request goes to Flask (which syncs to NestJS)
       const token = localStorage.getItem('token');
       await axios.post('http://localhost:5000/api/kb_request', payload, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'X-User-Email': user?.email || '',
           'X-User-Name': user?.name || '',
           'X-User-Role': user?.role || ''
         }
       });
-      
+
       // Show success animation
       setShowSaveSuccess(true);
-      
+
       // Mark this message as saved
       const newSet = new Set<number>();
       savedKbIndices.forEach(v => newSet.add(v));
       newSet.add(currentStructuredData.index);
       setSavedKbIndices(newSet);
-      
+
       // Update request status
-      setKbRequestStatus(prev => ({ 
-        ...prev, 
-        [currentStructuredData.index]: { exists: true, status: 'pending' } 
+      setKbRequestStatus(prev => ({
+        ...prev,
+        [currentStructuredData.index]: { exists: true, status: 'pending' }
       }));
-      
+
       // Close dialog after animation
       setTimeout(() => {
         setShowSaveSuccess(false);
@@ -495,8 +497,8 @@ const Chat: React.FC = () => {
                       <span onClick={() => loadThreadMessages(thread.id)} style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {thread.title}
                       </span>
-                      <IconButton 
-                        size="small" 
+                      <IconButton
+                        size="small"
                         onClick={(e) => {
                           e.stopPropagation();
                           setDeleteThreadId(thread.id);
@@ -513,14 +515,14 @@ const Chat: React.FC = () => {
             </div>
           </div>
           <div className="sidebar-footer">
-            <div 
-              className="user-profile" 
+            <div
+              className="user-profile"
               onClick={(e) => setUserAnchorEl(e.currentTarget)}
             >
               <div className="avatar-small">{user?.name ? user.name[0].toUpperCase() : 'U'}</div>
               <span className="user-name">{user?.name || 'User'}</span>
             </div>
-            
+
             <Menu
               anchorEl={userAnchorEl}
               open={Boolean(userAnchorEl)}
@@ -569,7 +571,7 @@ const Chat: React.FC = () => {
                 navigate('/');
               }}>
                 <ListItemIcon>
-                  <LogoutIcon fontSize="small" sx={{ color: 'var(--danger-100)' }} />
+                   <LogoutIcon fontSize="small" sx={{ color: 'var(--danger-100)' }} />
                 </ListItemIcon>
                 <ListItemText primary="Logout" />
               </MenuItem>
@@ -579,78 +581,64 @@ const Chat: React.FC = () => {
 
         {/* Main Content */}
         <main className="main-content" onClick={() => sidebarOpen && setSidebarOpen(false)}>
-          {/* Header */}
-          <header className="chat-header">
-            <button className="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </button>
-            <div className="header-actions">
-              <Tooltip title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-                <IconButton
-                  onClick={() => setDarkMode(!darkMode)}
-                  style={{ color: 'var(--muted-foreground)' }}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            p: 2, 
+            position: 'absolute', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            zIndex: 100 
+          }}>
+            <IconButton 
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              sx={{ color: 'var(--foreground)', opacity: 0.8, '&:hover': { opacity: 1 } }}
+            >
+              <MenuIcon />
+            </IconButton>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <IconButton 
+                onClick={toggleDarkMode}
+                sx={{ color: 'var(--foreground)', opacity: 0.7, '&:hover': { opacity: 1 } }}
+              >
+                {darkMode ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+              </IconButton>
+
+              <Box 
+                onClick={(e) => setUserAnchorEl(e.currentTarget)}
+                sx={{ 
+                  cursor: 'pointer',
+                  p: 0.5,
+                  borderRadius: '50%',
+                  '&:hover': { backgroundColor: 'var(--accent)', opacity: 0.9 }
+                }}
+              >
+                <Avatar
+                  sx={{ 
+                    width: 32, 
+                    height: 32, 
+                    backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                    color: '#0ea5e9',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    border: '1px solid rgba(14, 165, 233, 0.3)'
+                  }}
                 >
-                  {darkMode ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
-                </IconButton>
-              </Tooltip>
-              {messages.length > 0 && (
-                <>
-                  <IconButton
-                    aria-label="more"
-                    id="long-button"
-                    aria-controls={exportAnchorEl ? 'long-menu' : undefined}
-                    aria-expanded={exportAnchorEl ? 'true' : undefined}
-                    aria-haspopup="true"
-                    onClick={handleExportClick}
-                    style={{ color: 'var(--muted-foreground)' }}
-                  >
-                    <MoreVertIcon />
-                  </IconButton>
-                  <Menu
-                    id="long-menu"
-                    className="export-menu"
-                    MenuListProps={{
-                      'aria-labelledby': 'long-button',
-                    }}
-                    anchorEl={exportAnchorEl}
-                    open={Boolean(exportAnchorEl)}
-                    onClose={handleExportClose}
-                    PaperProps={{
-                      style: {
-                        backgroundColor: 'var(--popover)',
-                        color: 'var(--popover-foreground)',
-                        borderRadius: '12px',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                        minWidth: '200px',
-                        padding: '6px',
-                        border: '1px solid var(--border)'
-                      }
-                    }}
-                  >
-                    <MenuItem onClick={exportChatTxt} className="export-menu-item">
-                      <ListItemIcon className="export-menu-icon">
-                        <DescriptionIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="Export as TXT" primaryTypographyProps={{ fontWeight: 500, fontSize: '0.9rem' }} />
-                    </MenuItem>
-                    <MenuItem onClick={exportChatPdf} className="export-menu-item">
-                      <ListItemIcon className="export-menu-icon">
-                        <PictureAsPdfIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="Export as PDF" primaryTypographyProps={{ fontWeight: 500, fontSize: '0.9rem' }} />
-                    </MenuItem>
-                  </Menu>
-                </>
-              )}
-            </div>
-          </header>
+                  {user?.name?.[0]?.toUpperCase()}
+                </Avatar>
+              </Box>
+            </Box>
+          </Box>
 
           <Dialog
             open={deleteDialogOpen}
             onClose={() => setDeleteDialogOpen(false)}
-            PaperProps={{ 
-              sx: { 
-                backgroundColor: 'var(--card)', 
+            PaperProps={{
+              sx: {
+                backgroundColor: 'var(--card)',
                 backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0))',
                 color: 'var(--foreground)',
                 borderRadius: '24px',
@@ -660,13 +648,13 @@ const Chat: React.FC = () => {
                 mx: 2,
                 width: '100%',
                 maxWidth: '240px'
-              } 
+              }
             }}
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 2, px: 2, pt: 2 }}>
-              <Box sx={{ 
-                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1))', 
-                borderRadius: '20px', 
+              <Box sx={{
+                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1))',
+                borderRadius: '20px',
                 p: 2,
                 display: 'flex',
                 alignItems: 'center',
@@ -683,11 +671,11 @@ const Chat: React.FC = () => {
               </Typography>
             </DialogContent>
             <DialogActions sx={{ p: 2, pt: 3, gap: 1, flexDirection: 'column' }}>
-              <Button 
-                onClick={deleteThread} 
+              <Button
+                onClick={deleteThread}
                 variant="contained"
                 fullWidth
-                sx={{ 
+                sx={{
                   borderRadius: '14px',
                   backgroundColor: '#ef4444',
                   textTransform: 'none',
@@ -708,11 +696,11 @@ const Chat: React.FC = () => {
               >
                 Delete Forever
               </Button>
-              <Button 
-                onClick={() => setDeleteDialogOpen(false)} 
+              <Button
+                onClick={() => setDeleteDialogOpen(false)}
                 variant="text"
                 fullWidth
-                sx={{ 
+                sx={{
                   borderRadius: '14px',
                   color: 'var(--muted-foreground)',
                   textTransform: 'none',
@@ -744,13 +732,9 @@ const Chat: React.FC = () => {
                   { icon: <ScienceIcon fontSize="inherit" />, label: "Research" }
                 ]} />
                 <div className="welcome-screen" id="welcomeScreen" style={{ position: 'relative', zIndex: 10 }}>
-                  <div className="welcome-logo-wrapper">
-                    <img src="/medchat-logo.png" alt="MedChat Logo" className="welcome-logo" />
-                  </div>
                   <h1 className="welcome-title">
                     {(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}
                   </h1>
-                  <p className="welcome-subtitle">I'm MedChat, your AI assistant for medical guidance and symptom analysis.</p>
                 </div>
               </div>
             ) : (
@@ -797,16 +781,16 @@ const Chat: React.FC = () => {
                               {msg.can_save && msg.structured && (
                                 <Tooltip title={
                                   savedKbIndices.has(idx) ? "Already requested" :
-                                  (kbRequestStatus[idx]?.exists ? 
-                                    (kbRequestStatus[idx].status === 'approved' ? "Already approved" : 
-                                     kbRequestStatus[idx].status === 'pending' ? "Request pending" : 
-                                     "Already requested") : 
-                                    "Save to Knowledge Base")
+                                    (kbRequestStatus[idx]?.exists ?
+                                      (kbRequestStatus[idx].status === 'approved' ? "Already approved" :
+                                        kbRequestStatus[idx].status === 'pending' ? "Request pending" :
+                                          "Already requested") :
+                                      "Save to Knowledge Base")
                                 } placement="top">
                                   <span>
-                                    <IconButton 
-                                      onClick={() => saveToKb(msg.structured, idx)} 
-                                      className="save-kb-icon-btn" 
+                                    <IconButton
+                                      onClick={() => saveToKb(msg.structured, idx)}
+                                      className="save-kb-icon-btn"
                                       size="small"
                                       disabled={savedKbIndices.has(idx) || kbRequestStatus[idx]?.exists}
                                     >
@@ -844,7 +828,7 @@ const Chat: React.FC = () => {
           </div>
 
           <div className="input-container">
-            <div className="input-box bg-bg-200">
+            <div className="input-box">
               <div className="input-inner">
                 <textarea
                   id="messageInput"
@@ -861,12 +845,16 @@ const Chat: React.FC = () => {
                   disabled={loading}
                 />
               </div>
+
               <div className="input-actions">
-                <div className="action-right">
-                  <button id="sendBtn" className="send-btn" disabled={!inputValue.trim() || loading} onClick={sendMessage}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
-                  </button>
-                </div>
+                <button
+                  id="sendBtn"
+                  className="send-btn"
+                  disabled={!inputValue.trim() || loading}
+                  onClick={sendMessage}
+                >
+                  {loading ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: '1rem', ml: '2px' }} />}
+                </button>
               </div>
             </div>
             <div className="input-disclaimer text-text-300">
@@ -913,10 +901,10 @@ const Chat: React.FC = () => {
         </Box>
         <DialogContent sx={{ mt: 1, px: 2, pb: 0 }}>
           {showSaveSuccess ? (
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
+            <Box sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
               justifyContent: 'center',
               py: 4,
               gap: 2
@@ -931,15 +919,15 @@ const Chat: React.FC = () => {
                 justifyContent: 'center',
                 animation: 'scaleIn 0.3s ease-out'
               }}>
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="32" 
-                  height="32" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="#22c55e" 
-                  strokeWidth="3" 
-                  strokeLinecap="round" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#22c55e"
+                  strokeWidth="3"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                   style={{ animation: 'drawCheck 0.5s ease-out forwards' }}
                 >
