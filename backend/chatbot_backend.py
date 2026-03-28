@@ -8,7 +8,7 @@ import sqlite3
 
 
 def auto_add_symptom_to_kb(
-    symptom: str, drug: str, mechanism: str, precautions: str
+    symptom: str, drug: str, mechanism: str, precautions: str, side_effects: str = "Use with caution"
 ) -> bool:
     """
     Auto-add a new symptom to KB (approved status, marked as auto-generated).
@@ -20,16 +20,16 @@ def auto_add_symptom_to_kb(
         cur = conn.cursor()
         cur.execute(
             """
-            INSERT INTO kb_requests (user_id, username, user_email, suggested_symptom, suggested_drug, suggested_mechanism, suggested_precautions, status, is_auto_generated, reviewed_at)
-            VALUES (1, 'System', 'system@localhost', ?, ?, ?, ?, 'approved', 1, datetime('now'))
+            INSERT INTO kb_requests (user_id, username, user_email, suggested_symptom, suggested_drug, suggested_mechanism, suggested_precautions, suggested_side_effects, status, is_auto_generated, reviewed_at)
+            VALUES (1, 'System', 'system@localhost', ?, ?, ?, ?, ?, 'approved', 1, datetime('now'))
         """,
-            (symptom, drug, mechanism, precautions),
+            (symptom, drug, mechanism, precautions, side_effects),
         )
         conn.commit()
         conn.close()
 
         # Add to cache for fast lookup
-        add_to_kb_cache(symptom, drug, mechanism, precautions, True)
+        add_to_kb_cache(symptom, drug, mechanism, precautions, side_effects, True)
         print(f"[auto_add] Added '{symptom}' -> '{drug}' to KB")
         return True
     except Exception as e:
@@ -51,9 +51,19 @@ def get_response(
     if not thread_id:
         title = " ".join(user_input.split()[:5]) + "..."
         thread_id = create_thread(title, user_id=user_id)
+    else:
+        # Extra safety check: confirm ownership if we didn't just create it
+        # This is a fallback in case the caller didn't check (but app.py does)
+        conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../medical kb/chat.db"))
+        row = conn.execute("SELECT user_id FROM threads WHERE id = ?", (thread_id,)).fetchone()
+        conn.close()
+        if row and row[0] != user_id:
+            # If somehow we get a thread from another user, we stop immediately.
+            # In a production app, we'd raise a custom exception here.
+            return {"response": "Unauthorized access to thread history.", "source": "security_check"}
 
     # Get recent conversation history + append current message
-    recent_msgs = get_recent_messages(thread_id, limit=6)
+    recent_msgs = get_recent_messages(thread_id, limit=6, user_id=user_id)
     history_lines = [
         f"{msg['role'].capitalize()}: {msg['content']}" for msg in recent_msgs
     ]
@@ -88,6 +98,7 @@ def get_response(
                     drug=structured["drug"],
                     mechanism=structured.get("mechanism", "Not available"),
                     precautions=structured.get("precautions", "Consult a doctor"),
+                    side_effects=structured.get("side_effects") or structured.get("side_effect", "Use with caution"),
                 )
                 # Now query again to get the result
                 result = query_symptom(symptoms[0])
@@ -181,8 +192,19 @@ def get_response(
     }
 
     if result.get("structured"):
+        structured = result["structured"]
         response_data["can_save"] = True
-        response_data["structured"] = result["structured"]
+        response_data["structured"] = structured
+
+        # Auto-add to KB if it's a valid new symptom/drug recommendation
+        if structured.get("symptom") and structured.get("drug"):
+            auto_add_symptom_to_kb(
+                symptom=structured["symptom"].lower(),
+                drug=structured["drug"],
+                mechanism=structured.get("mechanism", "Not available"),
+                precautions=structured.get("precautions", "Consult a doctor"),
+                side_effects=structured.get("side_effects") or structured.get("side_effect", "Use with caution"),
+            )
 
     # Save bot message
     save_message(

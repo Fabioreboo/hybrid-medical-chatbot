@@ -99,13 +99,26 @@ def init_chat_db():
             suggested_drug TEXT NOT NULL,
             suggested_mechanism TEXT,
             suggested_precautions TEXT,
+            suggested_side_effects TEXT,
             user_note TEXT,
             status TEXT DEFAULT 'pending',
+            is_auto_generated INTEGER DEFAULT 0,
             submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             reviewed_at TIMESTAMP
         )
     """
     )
+
+    # Safely add suggested_side_effects and is_auto_generated to kb_requests
+    existing_cols_kb = [
+        row[1] for row in cursor.execute("PRAGMA table_info(kb_requests)").fetchall()
+    ]
+    if "suggested_side_effects" not in existing_cols_kb:
+        cursor.execute("ALTER TABLE kb_requests ADD COLUMN suggested_side_effects TEXT")
+    if "is_auto_generated" not in existing_cols_kb:
+        cursor.execute(
+            "ALTER TABLE kb_requests ADD COLUMN is_auto_generated INTEGER DEFAULT 0"
+        )
 
     # Logs every chatbot query made by users
     cursor.execute(
@@ -289,14 +302,22 @@ def get_user_by_id(user_id: int):
     return dict(row) if row else None
 
 
-def get_recent_messages(thread_id: str, limit: int = 5):
+def get_recent_messages(thread_id: str, limit: int = 5, user_id: int = None):
     """
     Get the most recent messages for a thread (chronological order)
     to provide conversation context to the LLM.
+    If user_id is provided, verifies that the thread belongs to that user.
     """
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
+
+    if user_id is not None:
+        cursor.execute("SELECT 1 FROM threads WHERE id = ? AND user_id = ?", (thread_id, user_id))
+        if not cursor.fetchone():
+            conn.close()
+            return []
+
     cursor.execute(
         """
         SELECT role, content 

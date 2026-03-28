@@ -122,6 +122,17 @@ def api_chat():
     username = g.username
     user_email = g.user_email
 
+    # Ownership check if thread_id is provided
+    if thread_id:
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        row = cur.execute(
+            "SELECT 1 FROM threads WHERE id = ? AND user_id = ?", (thread_id, user_id)
+        ).fetchone()
+        conn.close()
+        if not row:
+            return jsonify({"error": "Unauthorized access to thread"}), 403
+
     result = get_response(
         user_input, thread_id, user_id=user_id, username=username, user_email=user_email
     )
