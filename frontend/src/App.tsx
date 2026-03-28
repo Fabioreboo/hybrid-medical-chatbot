@@ -44,7 +44,9 @@ function App() {
               )
             }
           />
-          <Route path="/chat" element={user ? <Chat /> : <Navigate to="/" replace />} />
+          <Route path="/chat" element={
+            user ? <Chat /> : <Navigate to="/" replace />
+          } />
           <Route path="/admin" element={
             user?.role === 'admin' ? (
               <>

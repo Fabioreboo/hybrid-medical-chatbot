@@ -81,6 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     sessionStorage.removeItem('userEmail');
     sessionStorage.removeItem('userName');
     sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('adminPinVerified');
     delete authAxios.defaults.headers.common['Authorization'];
     setUser(null);
   };

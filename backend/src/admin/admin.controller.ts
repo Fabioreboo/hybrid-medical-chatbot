@@ -16,12 +16,20 @@ export class AdminController {
 
   @Post('auth')
   @UseGuards(AuthGuard('jwt'))
-  async verifyAdminPassword(@Body('password') password: string, @Request() req) {
+  async verifyAdminPassword(@Body('password') password: any, @Request() req) {
     const user = req.user as User;
     await this.adminService.ensureAdmin(user);
     
-    const correctPassword = this.configService.get<string>('ADMIN_PASSWORD');
-    if (password === correctPassword) {
+    const envPassword = this.configService.get<string>('ADMIN_PASSWORD') || process.env.ADMIN_PASSWORD;
+    if (!envPassword) {
+      this.logger.error('ADMIN_PASSWORD environment variable is not set');
+      return { success: false, message: 'Server configuration error' };
+    }
+    
+    const correctPassword = String(envPassword).trim();
+    const inputPassword = String(password).trim();
+    
+    if (inputPassword === correctPassword) {
       return { success: true };
     }
     return { success: false, message: 'Invalid admin password' };
@@ -29,18 +37,26 @@ export class AdminController {
 
   @Post('verify-pin')
   @UseGuards(AuthGuard('jwt'))
-  async verifyPin(@Body('pin') pin: string, @Request() req) {
+  async verifyPin(@Body('pin') pin: any, @Request() req) {
     const user = req.user as User;
     await this.adminService.ensureAdmin(user);
     
-    const correctPin = process.env.ADMIN_PIN || '1234';
+    const envPin = this.configService.get<string>('ADMIN_PIN') || process.env.ADMIN_PIN;
+    if (!envPin) {
+      this.logger.error('ADMIN_PIN environment variable is not set');
+      return { success: false, message: 'Server configuration error' };
+    }
+    
+    const correctPin = String(envPin).trim();
+    const inputPin = String(pin).trim();
+    
     this.logger.log(`========== PIN CHECK ==========`);
-    this.logger.log(`Received PIN: [${pin}]`);
+    this.logger.log(`Received PIN: [${inputPin}] (type: ${typeof pin})`);
     this.logger.log(`Correct PIN: [${correctPin}]`);
-    this.logger.log(`Match: ${pin === correctPin}`);
+    this.logger.log(`Match: ${inputPin === correctPin}`);
     this.logger.log(`================================`);
     
-    if (pin === correctPin) {
+    if (inputPin === correctPin) {
       return { success: true };
     }
     return { success: false, message: 'Invalid PIN' };

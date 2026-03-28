@@ -23,7 +23,7 @@ def _load_kb_cache():
             cur = conn.cursor()
             rows = cur.execute(
                 """SELECT suggested_symptom, suggested_drug, suggested_mechanism, 
-                          suggested_precautions, is_auto_generated 
+                          suggested_precautions, suggested_side_effects, is_auto_generated 
                    FROM kb_requests WHERE status = 'approved'"""
             ).fetchall()
             conn.close()
@@ -36,6 +36,7 @@ def _load_kb_cache():
                     "drug": row["suggested_drug"],
                     "mechanism": row["suggested_mechanism"] or "Not available",
                     "precautions": row["suggested_precautions"] or "Consult a doctor",
+                    "side_effect": row["suggested_side_effects"] or "Use with caution",
                     "is_auto_generated": bool(row["is_auto_generated"]),
                 }
             _kb_cache_loaded = True
@@ -52,7 +53,7 @@ def get_cached_symptom(symptom: str) -> dict | None:
 
 
 def add_to_kb_cache(
-    symptom: str, drug: str, mechanism: str, precautions: str, is_auto: bool = True
+    symptom: str, drug: str, mechanism: str, precautions: str, side_effect: str = "Use with caution", is_auto: bool = True
 ):
     """Add new symptom to KB cache after auto-insertion."""
     _load_kb_cache()
@@ -63,6 +64,7 @@ def add_to_kb_cache(
             "drug": drug,
             "mechanism": mechanism,
             "precautions": precautions,
+            "side_effect": side_effect,
             "is_auto_generated": is_auto,
         }
 
@@ -121,7 +123,7 @@ def query_symptom(symptom: str) -> dict | None:
 
         cursor.execute(
             """SELECT suggested_symptom, suggested_drug, suggested_mechanism, 
-                      suggested_precautions, is_auto_generated 
+                      suggested_precautions, suggested_side_effects, is_auto_generated 
                FROM kb_requests 
                WHERE status = 'approved' AND LOWER(suggested_symptom) LIKE LOWER(?)
                LIMIT 1""",
@@ -138,6 +140,7 @@ def query_symptom(symptom: str) -> dict | None:
                 row["suggested_drug"],
                 row["suggested_mechanism"] or "Not available",
                 row["suggested_precautions"] or "Consult a doctor",
+                row["suggested_side_effects"] or "Use with caution",
                 bool(row["is_auto_generated"]),
             )
             return {
@@ -145,6 +148,7 @@ def query_symptom(symptom: str) -> dict | None:
                 "drug": row["suggested_drug"],
                 "mechanism": row["suggested_mechanism"] or "Not available",
                 "precautions": row["suggested_precautions"] or "Consult a doctor",
+                "side_effect": row["suggested_side_effects"] or "Use with caution",
                 "is_auto_generated": bool(row["is_auto_generated"]),
             }
 

@@ -46,11 +46,11 @@ def explain_with_kb(result: dict, chat_history: str = "") -> str:
 {history_prompt}Based ONLY on the structured data below, explain the treatment clearly to a patient in 2-3 sentences.
 Do NOT add any drug facts that are not present in the data below.
 
-Symptom: {result["symptom"]}
-Recommended drug: {result["drug"]}
-Mechanism: {result["mechanism"]}
-Precautions: {result["precautions"]}
-Known side effects: {result["side_effect"] or "not listed — use general caution"}
+Symptom: {result.get("symptom", "Unknown")}
+Recommended drug: {result.get("drug", "Alternative over-the-counter medicine")}
+Mechanism: {result.get("mechanism", "Information not available")}
+Precautions: {result.get("precautions", "Consult a healthcare professional")}
+Known side effects: {result.get("side_effect") or result.get("side_effects") or "not listed — use general caution"}
 
 CRITICAL INSTRUCTION: You MUST ask the user if they have any specific allergies related to the suggested medicine. To do this, use your medical knowledge to identify the common allergic reactions, symptoms, or conditions caused by allergies to {result["drug"]} (like hives, facial swelling, asthma). Then, explicitly ask if they have ever experienced those specific reactions when taking similar medications, instead of using the drug or class name. For example, instead of asking if they are allergic to NSAIDs, ask: "Have you ever experienced hives, facial swelling, or asthma symptoms when taking pain relievers?" Add this question to the end of your response.
 
