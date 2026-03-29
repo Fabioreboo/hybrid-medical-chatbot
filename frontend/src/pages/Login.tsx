@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Paper,
   Box,
-  Typography,
-  Button,
   CircularProgress,
 } from '@mui/material';
 import { Google as GoogleIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { BackgroundPaths } from '../components/ui/background-paths';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -17,7 +14,6 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Check for callback token in URL
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
     const userData = urlParams.get('user');
@@ -54,40 +50,10 @@ const Login: React.FC = () => {
   }
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
-          <Typography component="h1" variant="h4" align="center" gutterBottom>
-            Medical Chat Platform
-          </Typography>
-          <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-            Sign in to access your medical chatbot
-          </Typography>
-
-          <Button
-            fullWidth
-            variant="contained"
-            startIcon={<GoogleIcon />}
-            onClick={handleGoogleLogin}
-            sx={{ mt: 3, mb: 2 }}
-          >
-            Sign in with Google
-          </Button>
-
-          <Box sx={{ mt: 2, textAlign: 'center', fontSize: '0.75rem', color: 'text.secondary' }}>
-            <p>By signing in, you agree to our Terms of Service and Privacy Policy.</p>
-            <p>Your data is encrypted and secure.</p>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+    <BackgroundPaths 
+        title="Medical Chat Platform" 
+        onGoogleLogin={handleGoogleLogin} 
+    />
   );
 };
 

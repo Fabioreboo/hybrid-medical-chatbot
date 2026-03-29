@@ -26,7 +26,7 @@ function App() {
               user ? (
                 <Navigate to="/chat" replace />
               ) : (
-                <Box component="main" sx={{ flex: 1, p: 3, overflowY: 'auto' }}>
+                <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <Login />
                 </Box>
               )
@@ -38,7 +38,7 @@ function App() {
               user ? (
                 <Navigate to="/chat" replace />
               ) : (
-                <Box component="main" sx={{ flex: 1, p: 3, overflowY: 'auto' }}>
+                <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <Login />
                 </Box>
               )

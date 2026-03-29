@@ -1063,57 +1063,81 @@ const Chat: React.FC = () => {
         open={disclaimerOpen}
         disableEscapeKeyDown
         PaperProps={{
-          style: {
-            backgroundColor: 'var(--popover)',
-            color: 'var(--popover-foreground)',
-            borderRadius: '16px',
+          sx: {
+            backgroundColor: 'var(--card)',
+            backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0))',
+            color: 'var(--foreground)',
+            borderRadius: '20px',
+            border: '1px solid var(--border)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
             padding: '8px',
-            maxWidth: '450px'
+            mx: 2,
+            width: '100%',
+            maxWidth: '400px'
           }
         }}
       >
-        <DialogTitle sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
-          color: 'var(--primary)',
-          fontSize: '1.25rem',
-          fontWeight: 600,
-          pb: 1
-        }}>
-          <WarningAmberIcon />
-          Medical Disclaimer
-        </DialogTitle>
-        <DialogContent sx={{ border: 'none', py: 1 }}>
-          <Typography variant="body1" sx={{ color: 'var(--foreground)', opacity: 0.9, lineHeight: 1.6, mb: 2 }}>
-            This application provides AI-powered health information for educational purposes.
-            It is <strong>NOT</strong> a substitute for professional medical advice, diagnosis, or treatment.
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 1.5, px: 2, pt: 2 }}>
+          <Box sx={{
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.05))',
+            borderRadius: '20px',
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 16px rgba(245, 158, 11, 0.1)',
+            border: '1px solid rgba(245, 158, 11, 0.2)'
+          }}>
+            <WarningAmberIcon sx={{ color: '#f59e0b', fontSize: 32 }} />
+          </Box>
+          <DialogTitle sx={{ p: 0, fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.02em', color: 'var(--foreground)' }}>
+            Medical Disclaimer
+          </DialogTitle>
+        </Box>
+        <DialogContent sx={{ mt: 1, px: 3, pb: 0, textAlign: 'center' }}>
+          <Typography variant="body2" sx={{ color: 'var(--foreground)', opacity: 0.9, lineHeight: 1.5, mb: 2, fontWeight: 500, fontSize: '0.9rem' }}>
+            This application provides AI-powered health information for <Typography component="span" sx={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.9rem' }}>educational purposes</Typography>. It is NOT a substitute for professional medical advice, diagnosis, or treatment.
           </Typography>
-          <Typography variant="body2" sx={{ color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
-            Never disregard professional medical advice or delay seeking it because of something you have read here.
-            In an <strong>emergency</strong>, call your local emergency services immediately.
-          </Typography>
+          <Box sx={{ 
+              p: 2, 
+              borderRadius: '12px', 
+              backgroundColor: 'rgba(239, 68, 68, 0.05)', 
+              border: '1px solid rgba(239, 68, 68, 0.15)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+            <Box sx={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', backgroundColor: '#ef4444' }} />
+            <Typography variant="body2" sx={{ color: 'var(--foreground)', opacity: 0.85, lineHeight: 1.5, fontWeight: 500, fontSize: '0.85rem' }}>
+              Never disregard professional medical advice or delay seeking it because of something you have read here. 
+              In an <Typography component="span" sx={{ color: '#ef4444', fontWeight: 700, fontSize: '0.85rem' }}>emergency</Typography>, call your local emergency services immediately.
+            </Typography>
+          </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 1 }}>
+        <DialogActions sx={{ p: 3, pt: 3 }}>
           <Button
             onClick={() => setDisclaimerOpen(false)}
             variant="contained"
             fullWidth
             sx={{
               backgroundColor: 'var(--primary)',
-              '&:hover': {
-                backgroundColor: 'var(--ring)',
-                opacity: 0.9
-              },
-              borderRadius: '10px',
+              borderRadius: '12px',
               py: 1.2,
               textTransform: 'none',
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: '0.95rem',
-              boxShadow: 'none'
+              boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: 'var(--ring)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 12px 25px rgba(0,0,0,0.2)'
+              },
+              '&:active': {
+                transform: 'translateY(0)'
+              }
             }}
           >
-            I Understand and Agree
+            I Understand & Agree
           </Button>
         </DialogActions>
       </Dialog>
