@@ -25,6 +25,7 @@ yarn-error.log*
 # Build artifacts
 dist/
 build/
+tmp/
 *.tsbuildinfo
 
 # Local databases and temp files

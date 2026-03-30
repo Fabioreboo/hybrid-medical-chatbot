@@ -142,7 +142,7 @@ export const AuditLogsTab: React.FC = () => {
       el.remove();
     } else {
       const headers = ['Time', 'User', 'Email', 'Log Type', 'Action/Query', 'Details'];
-      const rows = logsToExport.map(l => [
+      const rows = logsToExport.map((l: AuditLog) => [
         l.created_at,
         l.username || 'System',
         l.user_email || '',

@@ -65,6 +65,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useThemeMode } from '../contexts/ThemeContext';
 
 interface SystemStats {
   totalUsers: number;
@@ -137,8 +138,6 @@ const StatCard: React.FC<{
 );
 
 type SortOption = 'order' | 'alpha_asc' | 'alpha_desc' | 'auto_first' | 'auto_last';
-
-import { useThemeMode } from '../contexts/ThemeContext';
 
 export const AnalyticsTab: React.FC = () => {
   const { user } = useAuth();

@@ -614,6 +614,53 @@ const Chat: React.FC = () => {
                 {darkMode ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
               </IconButton>
 
+              <IconButton 
+                onClick={handleExportClick}
+                sx={{ color: 'var(--foreground)', opacity: 0.7, '&:hover': { opacity: 1 } }}
+                title="Export Chat"
+              >
+                <MoreVertIcon fontSize="small" />
+              </IconButton>
+
+              <Menu
+                anchorEl={exportAnchorEl}
+                open={Boolean(exportAnchorEl)}
+                onClose={handleExportClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                slotProps={{
+                  paper: {
+                    sx: {
+                      borderRadius: '12px',
+                      mt: 1,
+                      backgroundColor: 'var(--card)',
+                      color: 'var(--foreground)',
+                      border: '1px solid var(--border)',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                    }
+                  }
+                }}
+              >
+                <MenuItem onClick={exportChatTxt} sx={{ fontSize: '0.9rem', py: 1, '&:hover': { backgroundColor: 'var(--accent)' } }}>
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <DescriptionIcon fontSize="small" sx={{ color: 'var(--primary)' }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Export as Text" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }} />
+                </MenuItem>
+                <MenuItem onClick={exportChatPdf} sx={{ fontSize: '0.9rem', py: 1, '&:hover': { backgroundColor: 'var(--accent)' } }}>
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <PictureAsPdfIcon fontSize="small" sx={{ color: '#ef4444' }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Export as PDF" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500 }} />
+                </MenuItem>
+              </Menu>
+
               <Box 
                 onClick={(e) => setUserAnchorEl(e.currentTarget)}
                 sx={{ 
