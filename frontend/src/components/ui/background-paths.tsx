@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
-import { Box, Typography, Button, useTheme } from "@mui/material";
+import { Box, Typography, Button, useTheme, Checkbox, FormControlLabel } from "@mui/material";
 
 function FloatingPaths({ position, isDark }: { position: number; isDark: boolean }) {
     const paths = Array.from({ length: 36 }, (_, i) => ({
@@ -60,6 +60,7 @@ export function BackgroundPaths({
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
     const words = title.split(" ");
+    const [consentChecked, setConsentChecked] = useState(false);
 
     const LetterBump = ({ letter, index }: { letter: string; index: number }) => {
         const letterRef = useRef<HTMLSpanElement>(null);
@@ -197,8 +198,9 @@ export function BackgroundPaths({
                         <Button
                             onClick={onGoogleLogin}
                             component={motion.button}
-                            whileHover={{ scale: 1.05, translateY: -2 }}
-                            whileTap={{ scale: 0.95 }}
+                            disabled={!consentChecked}
+                            whileHover={consentChecked ? { scale: 1.05, translateY: -2 } : {}}
+                            whileTap={consentChecked ? { scale: 0.95 } : {}}
                             disableRipple
                             sx={{
                                 borderRadius: '30px',
@@ -219,11 +221,18 @@ export function BackgroundPaths({
                                 alignItems: 'center',
                                 gap: 1.5,
                                 transition: 'all 0.3s ease',
-                                '&:hover': {
+                                opacity: consentChecked ? 1 : 0.5,
+                                cursor: consentChecked ? 'pointer' : 'not-allowed',
+                                '&:hover': consentChecked ? {
                                     backgroundColor: isDark ? '#ffffff' : '#000000',
                                     boxShadow: isDark 
                                         ? '0 12px 40px rgba(255,255,255,0.2)' 
                                         : '0 12px 40px rgba(0,0,0,0.2)',
+                                } : {},
+                                '&.Mui-disabled': {
+                                    color: isDark ? '#000' : '#fff',
+                                    backgroundColor: isDark ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.9)',
+                                    opacity: 0.5,
                                 }
                             }}
                         >
@@ -245,19 +254,49 @@ export function BackgroundPaths({
                         </Button>
                     </Box>
 
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
-                            mt: 5,
-                            maxWidth: 400,
-                            mx: 'auto'
-                        }}
-                    >
-                        By signing in, you agree to our Terms of Service and Privacy Policy. Your data is encrypted and secure.
-                    </Typography>
+                    <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={consentChecked}
+                                    onChange={(e) => setConsentChecked(e.target.checked)}
+                                    sx={{
+                                        color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
+                                        '&.Mui-checked': {
+                                            color: isDark ? '#ffffff' : '#000000',
+                                        },
+                                        pt: 0,
+                                    }}
+                                />
+                            }
+                            label={
+                                <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)', textAlign: 'left', maxWidth: 350, fontSize: '0.875rem' }}>
+                                    I consent to the use of my data for the knowledge base and agree to the Privacy Policy.
+                                </Typography>
+                            }
+                            sx={{ alignItems: 'flex-start', m: 0 }}
+                        />
+                    </Box>
                 </motion.div>
             </Box>
+
+            <Typography
+                variant="body2"
+                sx={{
+                    color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
+                    position: 'absolute',
+                    bottom: 30,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    textAlign: 'center',
+                    width: '100%',
+                    maxWidth: 600,
+                    px: 2,
+                    zIndex: 10
+                }}
+            >
+                By signing in, you agree to our Terms of Service and Privacy Policy. Your data is encrypted and secure.
+            </Typography>
         </Box>
     );
 }

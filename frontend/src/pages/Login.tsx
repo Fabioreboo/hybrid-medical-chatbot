@@ -24,7 +24,7 @@ const Login: React.FC = () => {
         login(token, user);
         setLoading(true);
         setTimeout(() => {
-          navigate('/chat');
+          navigate('/welcome');
         }, 500);
       } catch (error) {
         console.error('Error parsing user data:', error);

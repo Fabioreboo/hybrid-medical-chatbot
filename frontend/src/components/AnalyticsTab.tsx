@@ -354,7 +354,7 @@ export const AnalyticsTab: React.FC = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            label="Pending Tasks"
+            label="Auto Additions"
             value={stats?.pendingApprovals ?? 0}
             icon={<PendingIcon />}
             color="#ff9800"
@@ -503,20 +503,6 @@ export const AnalyticsTab: React.FC = () => {
                   <ListItemIcon><DescIcon fontSize="small" /></ListItemIcon>
                   <ListItemText>Alphabetical (Z-A)</ListItemText>
                 </MenuItem>
-                <MenuItem 
-                  onClick={() => { setSortBy('auto_first'); setSortAnchor(null); }}
-                  selected={sortBy === 'auto_first'}
-                >
-                  <ListItemIcon><KbIcon fontSize="small" sx={{ color: '#9c27b0' }} /></ListItemIcon>
-                  <ListItemText>Auto Added First</ListItemText>
-                </MenuItem>
-                <MenuItem 
-                  onClick={() => { setSortBy('auto_last'); setSortAnchor(null); }}
-                  selected={sortBy === 'auto_last'}
-                >
-                  <ListItemIcon><KbIcon fontSize="small" /></ListItemIcon>
-                  <ListItemText>Manual Added First</ListItemText>
-                </MenuItem>
               </Menu>
               <Typography variant="body2" sx={{ 
                 color: secondaryTextColor, 
@@ -589,9 +575,6 @@ export const AnalyticsTab: React.FC = () => {
                               </MuiTooltip>
                             )}
                             {entry.drug || '-'}
-                            {entry.is_auto_generated === 1 && (
-                              <Chip label="Auto" size="small" sx={{ height: 18, fontSize: '0.65rem', bgcolor: '#9c27b0', color: 'white' }} />
-                            )}
                           </Box>
                         </TableCell>
                         <TableCell sx={{ color: textColor, opacity: 0.9 }}>{entry.symptom || '-'}</TableCell>
